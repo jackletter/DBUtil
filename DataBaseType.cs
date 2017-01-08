@@ -9,6 +9,7 @@ namespace DBUtil
     {
         ORACLE = 0,
         SQLSERVER = 1,
-        MYSQL = 2
+        MYSQL = 2,
+        SQLITE = 3
     }
 }

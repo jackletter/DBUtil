@@ -20,6 +20,57 @@ namespace DBUtil
 
         public bool IsTran { set; get; }
 
+        /// <summary>当前数据库使用的参数的前缀符号</summary>
+        public string paraPrefix { get { return "@"; } }
+
+        #region 创建参数 public IDbDataParameter CreatePara()
+        /// <summary>
+        /// 创建参数
+        /// </summary>
+        /// <returns></returns>
+        public IDbDataParameter CreatePara()
+        {
+            return new MySqlParameter();
+        }
+        #endregion
+        #region 根据指定日期范围生成过滤字符串 public string GetDateFilter(string dateColumn, string minDate, string MaxDate, bool isMinInclude, bool isMaxInclude)
+        /// <summary>根据指定日期范围生成过滤字符串</summary>
+        /// <param name="dateColumn">要进行过滤的字段名称</param>
+        /// <param name="minDate">最小日期</param>
+        /// <param name="MaxDate">最大日期</param>
+        /// <param name="isMinInclude">最小日期是否包含</param>
+        /// <param name="isMaxInclude">最大日期是否包含</param>
+        /// <returns>返回生成的过滤字符串</returns>
+        public string GetDateFilter(string dateColumn, string minDate, string maxDate, bool isMinInclude, bool isMaxInclude)
+        {
+            DateTime dt;
+            if (DateTime.TryParse(minDate, out dt) && DateTime.TryParse(maxDate, out dt))
+            {
+                string res = "";
+                if (isMinInclude)
+                {
+                    res += " and " + dateColumn + ">='" + minDate + "'";
+                }
+                else
+                {
+                    res += " and " + dateColumn + ">'" + minDate + "'";
+                }
+                if (isMaxInclude)
+                {
+                    res += " and " + dateColumn + "<='" + maxDate + "'";
+                }
+                else
+                {
+                    res += " and " + dateColumn + "<'" + maxDate + "'";
+                }
+                return res;
+            }
+            else
+            {
+                throw new Exception("非正确的格式:[" + minDate + "]或[" + maxDate + "]");
+            }
+        }
+        #endregion
         #region 执行sql语句 public int ExecuteSql(string strSql)
         /// <summary>
         /// 执行sql语句
@@ -780,15 +831,15 @@ namespace DBUtil
         /// 获得所有表,注意返回的集合中的表模型中只有表名
         /// </summary>
         /// <returns></returns>
-        public List<DataTable> ShowTables()
+        public List<TableStruct> ShowTables()
         {
             DataSet ds = GetDataSet("select TABLE_NAME from INFORMATION_SCHEMA.TABLES t where t.TABLE_TYPE ='BASE TABLE'");
-            DataTable tbl = null;
-            List<DataTable> list = new List<DataTable>();
+            TableStruct tbl = null;
+            List<TableStruct> list = new List<TableStruct>();
             for (int i = 0; i < ds.Tables[0].Rows.Count; i++)
             {
-                tbl = new DataTable();
-                tbl.TableName = ds.Tables[0].Rows[i][0].ToString();
+                tbl = new TableStruct();
+                tbl.Name = ds.Tables[0].Rows[i][0].ToString();
                 list.Add(tbl);
             }
             return list;

@@ -24,6 +24,22 @@ namespace DBUtil
         /// <summary>记录是否开启了事务,防止多次开启事务</summary>
         bool IsTran { get; set; }
 
+        /// <summary>当前数据库使用的参数的前缀符号</summary>
+        string paraPrefix { get; }
+
+        /// <summary>创建参数</summary>
+        /// <returns>针对当前数据库类型的空参数对象</returns>
+        IDbDataParameter CreatePara();
+
+        /// <summary>根据指定日期范围生成过滤字符串</summary>
+        /// <param name="dateColumn">要进行过滤的字段名称</param>
+        /// <param name="minDate">最小日期</param>
+        /// <param name="MaxDate">最大日期</param>
+        /// <param name="isMinInclude">最小日期是否包含</param>
+        /// <param name="isMaxInclude">最大日期是否包含</param>
+        /// <returns>返回生成的过滤字符串</returns>
+        string GetDateFilter(string dateColumn, string minDate, string MaxDate, bool isMinInclude, bool isMaxInclude);
+
         /// <summary>执行sql语句</summary>
         /// <param name="strSql">要执行的sql语句</param>
         /// <returns>受影响的行数</returns>
@@ -186,28 +202,21 @@ namespace DBUtil
 
         /// <summary>返回所有的表</summary>
         /// <returns>返回所有的表</returns>
-        List<DataTable> ShowTables();
+        List<TableStruct> ShowTables();
 
-        /// <summary>
-        /// 返回所有的视图
-        /// </summary>
+        /// <summary>返回所有的视图</summary>
         /// <returns>返回所有的视图</returns>
         List<DataView> ShowViews();
 
-        /// <summary>
-        /// 生成一个表的新纪录的ID
-        /// </summary>
+        /// <summary>生成一个表的新纪录的ID</summary>
         /// <param name="TableName">要生成ID的表名</param>
         /// <returns>返回新的ID</returns>
         int SetID(string TableName);
 
-        /// <summary>
-        /// 重设置一个表的ID值
-        /// </summary>
+        /// <summary>重设置一个表的ID值</summary>
         /// <param name="TableName">表名</param>
         /// <param name="IDColumn">列名</param>
         /// <returns>是否重置成功</returns>
         bool ResetID(string TableName, string IDColumn);
-
     }
 }

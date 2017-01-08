@@ -48,6 +48,11 @@
     <Reference Include="System" />
     <Reference Include="System.ComponentModel.DataAnnotations" />
     <Reference Include="System.Data" />
+    <Reference Include="System.Data.SQLite, Version=1.0.89.0, Culture=neutral, PublicKeyToken=db937bc2d44ff139, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>lib\System.Data.SQLite.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
@@ -59,15 +64,20 @@
     <Compile Include="MySqlIDbAccess.cs" />
     <Compile Include="OleIDbBase.cs" />
     <Compile Include="OracleIDbAccess.cs" />
+    <Compile Include="Result.cs" />
     <Compile Include="SearchResult.cs" />
+    <Compile Include="SQLiteIDbAccess.cs" />
     <Compile Include="SqlServerIDbAccess.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="TableStruct.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="lib\MySql.Data.dll" />
     <Content Include="lib\MySql.Data.Entity.dll" />
     <Content Include="lib\MySql.Web.dll" />
     <Content Include="lib\Oracle.DataAccess.dll" />
+    <Content Include="lib\SQLite.Interop.dll" />
+    <Content Include="lib\System.Data.SQLite.dll" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
