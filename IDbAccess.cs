@@ -24,6 +24,9 @@ namespace DBUtil
         /// <summary>记录是否开启了事务,防止多次开启事务</summary>
         bool IsTran { get; set; }
 
+        /// <summary>打开连接测试</summary>
+        Result OpenTest();
+
         /// <summary>当前数据库使用的参数的前缀符号</summary>
         string paraPrefix { get; }
 

@@ -5,7 +5,7 @@ using System.Text;
 
 namespace DBUtil
 {
-    public class AccessIDbAccess : OleIDbBase
+    public class AccessIDbAccess:OleIDbBase
     {
         public override string GetSqlForPageSize(string selectSql, string strOrder, int PageSize, int PageIndex)
         {

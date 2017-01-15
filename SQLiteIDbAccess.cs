@@ -19,6 +19,29 @@ namespace DBUtil
 
         public bool IsOpen { set; get; }
 
+        /// <summary>打开连接测试</summary>
+        /// <returns></returns>
+        public Result OpenTest()
+        {
+            try
+            {
+                conn.Open();
+                conn.Close();
+                return new Result()
+                {
+                    Success = true
+                };
+            }
+            catch (Exception ex)
+            {
+                return new Result()
+                {
+                    Success = false,
+                    Data = ex.ToString()
+                };
+            }
+        }
+
         public bool IsTran { set; get; }
 
         /// <summary>当前数据库使用的参数的前缀符号</summary>

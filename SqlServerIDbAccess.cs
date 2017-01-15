@@ -20,6 +20,29 @@ namespace DBUtil
 
         public bool IsTran { set; get; }
 
+        /// <summary>打开连接测试</summary>
+        /// <returns></returns>
+        public Result OpenTest()
+        {
+            try
+            {
+                conn.Open();
+                conn.Close();
+                return new Result()
+                {
+                    Success = true
+                };
+            }
+            catch (Exception ex)
+            {
+                return new Result()
+                {
+                    Success = false,
+                    Data = ex.ToString()
+                };
+            }
+        }
+
         /// <summary>当前数据库使用的参数的前缀符号</summary>
         public string paraPrefix { get { return "@"; } }
 
@@ -932,6 +955,8 @@ select
     最大长度=tt.max_length,
 	说明=tt.说明,
 	是否可空=IS_NULLABLE,
+    自增种子=IDENT_SEED('{0}'),
+    增量=IDENT_INCR('{0}'),
 	默认值=COLUMN_DEFAULT,
 	是否自增 
 from INFORMATION_SCHEMA.COLUMNS T
@@ -969,6 +994,11 @@ and c.TABLE_NAME='{0}'
                     Default = dt.Rows[i]["默认值"].ToString(),
                     MaxLength = int.Parse(dt.Rows[i]["最大长度"].ToString())
                 };
+                if (col.IsIdentity)
+                {
+                    col.Start = int.Parse(dt.Rows[0]["自增种子"].ToString());
+                    col.Incre = int.Parse(dt.Rows[0]["增量"].ToString());
+                }
                 col.Default = (col.Default ?? "").Trim(new char[] { '(', ')', ' ', '\'' });
                 tbl.Columns.Add(col);
                 string sqltmp = string.Format(@"SELECT
@@ -1021,9 +1051,248 @@ where a.constraint_type = 'PRIMARY KEY' and a.table_name = '{0}'
                 }
             }
             tbl.PrimaryKey = (tbl.PrimaryKey ?? "").Trim(',');
+            sql = @"select 
+	说明=(SELECT value   
+FROM sys.extended_properties ds  
+LEFT JOIN sysobjects tbs ON ds.major_id=tbs.id  
+WHERE  ds.minor_id=0 and  
+ tbs.name=table_name )
+from INFORMATION_SCHEMA.TABLES t where t.TABLE_TYPE='BASE TABLE' and t.TABLE_NAME='" + tbl.Name + "'";
+            tbl.Desc = GetFirstColumnString(sql);
+            //构建表索引集合
+            sql = "sp_helpindex '" + tableName + "'";
+            dt = GetDataTable(sql);
+            if (dt != null && dt.Rows.Count > 0)
+            {
+                for (int i = dt.Rows.Count - 1; i >= 0; i--)
+                {
+                    if (dt.Rows[i][1].ToString().Contains("primary key located on PRIMARY") || dt.Rows[i][1].ToString().Contains("unique key located on PRIMARY"))
+                    {
+                        continue;
+                    }
+                    TableStruct.Index index = new TableStruct.Index();
+                    index.Name = dt.Rows[i][0].ToString();
+                    index.Desc = dt.Rows[i][1].ToString();
+                    index.Keys = dt.Rows[i][2].ToString();
+                    tbl.Indexs.Add(index);
+                }
+            }
+
+            //构建触发器集合
+            sql = @" sp_helptrigger " + tableName;
+            dt = GetDataTable(sql);
+            if (dt != null && dt.Rows.Count > 0)
+            {
+                for (int i = 0; i < dt.Rows.Count; i++)
+                {
+                    TableStruct.Trigger tri = new TableStruct.Trigger();
+                    tri.Name = dt.Rows[i]["trigger_name"].ToString();
+                    string desc = "";
+                    if (dt.Rows[i]["isupdate"].ToString() == "1")
+                    {
+                        desc += "update/";
+                    }
+                    if (dt.Rows[i]["isdelete"].ToString() == "1")
+                    {
+                        desc += "delete/";
+                    }
+                    if (dt.Rows[i]["isinsert"].ToString() == "1")
+                    {
+                        desc += "insert/";
+                    }
+                    if (dt.Rows[i]["isafter"].ToString() == "1")
+                    {
+                        desc += "after";
+                    }
+                    tri.Type = desc;
+                    tbl.Triggers.Add(tri);
+                }
+            }
+            //构建约束集合
+            sql = "sp_helpconstraint @objname='" + tableName + "'";
+            DataSet ds = GetDataSet(sql);
+            if (ds.Tables.Count > 1 && ds.Tables[1].Rows.Count > 0)
+            {
+
+                for (int i = 0; i < ds.Tables[1].Rows.Count; i++)
+                {
+                    TableStruct.Constraint constraint = new TableStruct.Constraint();
+
+                    string type = (ds.Tables[1].Rows[i]["constraint_type"] ?? "").ToString();
+                    if (string.IsNullOrWhiteSpace(type))
+                    {
+                        continue;
+                    }
+                    if (type.StartsWith("CHECK"))
+                    {
+                        constraint.Name = (ds.Tables[1].Rows[i]["constraint_name"] ?? "").ToString();
+                        constraint.Type = "检查约束";
+                        string[] arr = (ds.Tables[1].Rows[i]["constraint_type"] ?? "").ToString().Split(new String[] { " " }, StringSplitOptions.RemoveEmptyEntries);
+
+                        constraint.Keys = arr[arr.Length - 1];
+                        constraint.Remark = (ds.Tables[1].Rows[i]["constraint_keys"] ?? "").ToString();
+                        tbl.Constraints.Add(constraint);
+                        continue;
+                    }
+                    else if (type.StartsWith("DEFAULT"))
+                    {
+                        constraint.Name = (ds.Tables[1].Rows[i]["constraint_name"] ?? "").ToString();
+                        constraint.Type = "默认约束";
+                        string[] arr = (ds.Tables[1].Rows[i]["constraint_type"] ?? "").ToString().Split(new String[] { " " }, StringSplitOptions.RemoveEmptyEntries);
+
+                        constraint.Keys = arr[arr.Length - 1];
+                        constraint.Remark = (ds.Tables[1].Rows[i]["constraint_keys"] ?? "").ToString();
+                        tbl.Constraints.Add(constraint);
+                        continue;
+                    }
+                    else if (type.StartsWith("FOREIGN"))
+                    {
+                        constraint.Name = (ds.Tables[1].Rows[i]["constraint_name"] ?? "").ToString();
+                        constraint.Type = "外键约束";
+                        if (ds.Tables[1].Rows.Count > i)
+                        {
+                            constraint.Name = (ds.Tables[1].Rows[i]["constraint_name"] ?? "").ToString();
+                            constraint.Keys = (ds.Tables[1].Rows[i]["constraint_keys"] ?? "").ToString();
+                            constraint.DelType = (ds.Tables[1].Rows[i]["delete_action"] ?? "").ToString();
+                            constraint.UpdateType = (ds.Tables[1].Rows[i]["update_action"] ?? "").ToString();
+
+                            DataTable dt2 = GetDataTable("select delete_referential_action,update_referential_action from sys.foreign_keys where name='" + constraint.Name + "'");
+                            switch (dt2.Rows[0]["delete_referential_action"].ToString())
+                            {
+                                case "0":
+                                    {
+                                        constraint.DelType = "NO ACTION";
+                                        break;
+                                    }
+                                case "1":
+                                    {
+                                        constraint.DelType = "CASCADE";
+                                        break;
+                                    }
+                                case "2":
+                                    {
+                                        constraint.DelType = "SET NULL";
+                                        break;
+                                    }
+                                case "3":
+                                    {
+                                        constraint.DelType = "SET DEFAULT";
+                                        break;
+                                    }
+                            }
+                            switch (dt2.Rows[0]["update_referential_action"].ToString())
+                            {
+                                case "0":
+                                    {
+                                        constraint.UpdateType = "NO ACTION";
+                                        break;
+                                    }
+                                case "1":
+                                    {
+                                        constraint.UpdateType = "CASCADE";
+                                        break;
+                                    }
+                                case "2":
+                                    {
+                                        constraint.UpdateType = "SET NULL";
+                                        break;
+                                    }
+                                case "3":
+                                    {
+                                        constraint.UpdateType = "SET DEFAULT";
+                                        break;
+                                    }
+                            }
+                            constraint.RefStr = (ds.Tables[1].Rows[i + 1]["constraint_keys"] ?? "").ToString();
+                        }
+                        constraint.Remark = "Update(" + constraint.UpdateType + ")," + "Delete(" + constraint.DelType + "),Ref(" + constraint.RefStr + ")";
+                        tbl.Constraints.Add(constraint);
+                        continue;
+                    }
+                    else if (type.StartsWith("PRIMARY"))
+                    {
+                        constraint.Name = (ds.Tables[1].Rows[i]["constraint_name"] ?? "").ToString();
+                        constraint.Type = "主键约束";
+                        constraint.Keys = (ds.Tables[1].Rows[i]["constraint_keys"] ?? "").ToString();
+                        tbl.Constraints.Add(constraint);
+                    }
+                    else if (type.StartsWith("UNIQUE"))
+                    {
+                        constraint.Name = (ds.Tables[1].Rows[i]["constraint_name"] ?? "").ToString();
+                        constraint.Type = "唯一约束";
+                        constraint.Keys = (ds.Tables[1].Rows[i]["constraint_keys"] ?? "").ToString();
+                        tbl.Constraints.Add(constraint);
+                    }
+                }
+            }
             return tbl;
         }
         #endregion
+
+        /// <summary>获取当前数据库的用户自定义函数</summary>
+        /// <returns></returns>
+        public List<Func> GetFuncs()
+        {
+            List<Func> res = new List<Func>();
+            string sql = "select 名称=name,类型=Case [TYPE] when 'FN' then '标量函数' when 'IF' then '表值函数' end ,modify_date from sys.objects where type='FN' or type='IF' order by name asc";
+            DataTable dt = GetDataTable(sql);
+            if (dt.Rows.Count > 0)
+            {
+                for (int i = 0; i < dt.Rows.Count; i++)
+                {
+                    Func func = new Func();
+                    func.Name = dt.Rows[i]["名称"].ToString();
+                    func.Type = dt.Rows[i]["类型"].ToString();
+                    func.LastUpdate = dt.Rows[i]["modify_date"].ToString();
+                    string sql2 = @"sp_helptext '" + func.Name + "'";
+                    StringBuilder sb = new StringBuilder();
+                    DataTable dt2 = GetDataTable(sql);
+                    if (dt2.Rows.Count > 0)
+                    {
+                        for (int ii = 0; ii < dt.Rows.Count; ii++)
+                        {
+                            sb.AppendLine(dt.Rows[i][0].ToString());
+                        }
+                    }
+                    func.CreateSql = sb.ToString();
+                    res.Add(func);
+                }
+            }
+            return res;
+        }
+
+        /// <summary>获取当前数据库的用户自定义存储过程</summary>
+        /// <returns></returns>
+        public List<Proc> GetProcs()
+        {
+            List<Proc> res = new List<Proc>();
+            string sql = @"select 名称=ROUTINE_NAME,最近更新=LAST_ALTERED
+from INFORMATION_SCHEMA.ROUTINES
+where ROUTINE_TYPE='PROCEDURE'";
+            DataTable dt = GetDataTable(sql);
+            if (dt.Rows.Count > 0)
+            {
+                for (int i = 0; i < dt.Rows.Count; i++)
+                {
+                    Proc proc = new Proc();
+                    proc.Name = dt.Rows[i]["名称"].ToString();
+                    proc.LastUpdate = dt.Rows[i]["最近更新"].ToString();
+                    sql = @"sp_helptext '" + proc.Name + "'";
+                    StringBuilder sb = new StringBuilder("");
+                    DataTable dt2 = GetDataTable(sql);
+                    if (dt.Rows.Count > 0)
+                    {
+                        for (int ii = 0; ii < dt.Rows.Count; ii++)
+                        {
+                            sb.AppendLine(dt.Rows[ii][0].ToString());
+                        }
+                        proc.CreateSql = sb.ToString();
+                    }
+                    res.Add(proc);
+                }
+            }
+            return res;
+        }
         #region 批量获得指定表的表结构说明 public List<TableStruct> GetTableStructs(List<string> tableNames)
         /// <summary>批量获得指定表的表结构说明</summary>
         /// <param name="tableNames">表名集合</param>
@@ -1038,7 +1307,6 @@ where a.constraint_type = 'PRIMARY KEY' and a.table_name = '{0}'
             return res;
         }
         #endregion
-
         #region 重命名指定表 public void RenameTable(string oldTableName, string newTableName)
         /// <summary>重命名指定表</summary>
         /// <param name="oldTableName">旧表名</param>
@@ -1378,5 +1646,253 @@ SELECT idx.name
                 ExecuteSql(string.Format("ALTER TABLE {0} ADD CONSTRAINT UQ_gene_{0}_{1} UNIQUE ({1})", tableName, columnName));
             }
         }
+
+        /// <summary>准备数据导出的存储过程,这将重建usp_CreateInsertScript</summary>
+        public void PreExportDataProc()
+        {
+            ExecuteSql(@"if exists (select 1  
+            from  sys.procedures  
+           where  name = 'usp_CreateInsertScript')  
+   drop proc usp_CreateInsertScript");
+            ExecuteSql(sqlExportDataProc);
+        }
+
+        /// <summary>根据表结构对象生成建表语句</summary>
+        /// <param name="tableStruct"></param>
+        /// <returns></returns>
+        public string CreateTableSql(TableStruct tableStruct)
+        {
+            string sql = string.Format(@"create table {0} (
+", tableStruct.Name);
+            string sqlPri = @"
+ALTER TABLE {0} ADD CONSTRAINT PK_gene_{0}_{1} PRIMARY KEY({2})";
+            string priname = "";
+            string prikey = "";
+            string sqldesc = "";
+            if (!string.IsNullOrWhiteSpace(tableStruct.Desc))
+            {
+                sqldesc += string.Format(@"
+ EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'{0}' , @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'TABLE',@level1name=N'{1}', @level2type=null,@level2name=null", tableStruct.Desc, tableStruct.Name);
+            }
+
+            tableStruct.Columns.ForEach(i =>
+            {
+                string ideSql = "";
+                string nullSql = "";
+                string defSql = "";
+                string uniSql = "";
+                ideSql = i.FinalIdentity;
+                if (i.IsUnique)
+                {
+                    uniSql = "unique";
+                }
+                if (!i.IsNullable)
+                {
+                    nullSql = "not null";
+                }
+                if (!string.IsNullOrWhiteSpace(i.Default))
+                {
+                    defSql = " default '" + i.Default + "'";
+                }
+                if (i.IsPrimaryKey)
+                {
+                    priname += "_" + i.Name;
+                    prikey += "," + i.Name;
+                }
+
+                sql += string.Format(@"    {0} {1} {2} {3} {4} {5},
+", i.Name, i.FinalType, nullSql, defSql, ideSql, uniSql);
+                if (i.Desc != "" && i.Desc != null)
+                {
+                    sqldesc += string.Format(@"
+EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'{0}' , @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'TABLE',@level1name=N'{1}', @level2type=N'COLUMN',@level2name=N'{2}'
+", i.Desc, tableStruct.Name, i.Name);
+                }
+            });
+            sql = sql.Trim('\n', '\r', ',');
+            priname = priname.Trim('_');
+            prikey = prikey.Trim(',');
+            sqlPri = string.Format(sqlPri, tableStruct.Name, priname, prikey);
+            if (prikey == "")
+            {
+                sqlPri = "";
+            }
+            sql += @"
+)
+";
+            string res = string.Format("{0}\r\n {1}\r\n {2}", sql, sqlPri, sqldesc);
+
+            //构建约束语句
+            //六类约束:主键、非空、默认、唯一、检查、外键,这里只对后两个约束生成语句
+            string sqlConstraint = "";
+            tableStruct.Constraints.ForEach(i =>
+            {
+                if (i.Type == "检查约束")
+                {
+                    sqlConstraint += "\r\n--************检查约束<" + i.Name + ">*****************\r\n";
+                    string tmp = string.Format("ALTER TABLE {0} ADD CONSTRAINT {1} CHECK({2})", tableStruct.Name, i.Name, i.Remark.Trim('(', ')'));
+                    sqlConstraint += tmp;
+                    sqlConstraint += "\r\n--************检查约束</" + i.Name + ">*****************\r\n";
+                }
+                else if (i.Type == "外键约束")
+                {
+                    sqlConstraint += "\r\n--************外键约束<" + i.Name + ">*****************\r\n";
+                    string tmp = string.Format("ALTER TABLE {0} ADD CONSTRAINT {1} FOREIGN KEY({2}) {3} ON DELETE {4} ON UPDATE {5}", tableStruct.Name, i.Name, i.Keys, i.RefStr, i.DelType, i.UpdateType);
+                    sqlConstraint += tmp;
+                    sqlConstraint += "\r\n--************外键约束</" + i.Name + ">*****************\r\n";
+                }
+            });
+            //构建触发器语句
+            string sqlTrigger = "";
+            tableStruct.Triggers.ForEach(i =>
+            {
+                sqlTrigger += "\r\n--************触发器<" + i.Name + ">*****************\r\ngo\r\n";
+                DataTable dt3 = GetDataTable("sp_helptext '" + i.Name + "'");
+                for (int k = 0; k < dt3.Rows.Count; k++)
+                {
+                    sqlTrigger += dt3.Rows[k][0].ToString();
+                }
+                sqlTrigger += "go\r\n--************触发器</" + i.Name + ">*****************\r\ngo\r\n";
+            });
+            //构建索引语句
+            string sqlIndex = "";
+            tableStruct.Indexs.ForEach(i =>
+            {
+                sqlIndex += "\r\n--************索引<" + i.Name + ">*****************\r\n";
+                if (i.Desc.Contains("unique"))
+                {
+                    sqlIndex += string.Format("CREATE UNIQUE NONCLUSTERED INDEX {0} ON test({1})", i.Name, i.Keys);
+                }
+                else
+                {
+                    sqlIndex += string.Format("CREATE NONCLUSTERED INDEX {0} ON test({1})", i.Name, i.Keys);
+                }
+
+                sqlIndex += "\r\n--************索引</" + i.Name + ">*****************\r\n";
+            });
+            res += string.Format("\r\n{0}\r\n{1}\r\n{2}", sqlConstraint, sqlTrigger, sqlIndex);
+            return res;
+        }
+
+        /// <summary>根据视图名称生成视图建立语句</summary>
+        /// <param name="viewName">视图名称</param>
+        /// <returns></returns>
+        public string CreateViewSql(string viewName)
+        {
+            StringBuilder sb = new StringBuilder();
+
+            DataTable dt = GetDataTable("sp_helptext " + viewName);
+            for (int ii = 0; ii < dt.Rows.Count; ii++)
+            {
+                sb.Append(dt.Rows[ii][0].ToString());
+            }
+            return sb.ToString();
+        }
+
+        /// <summary>根据存储过程名字生成存储过程的创建语句</summary>
+        /// <param name="procName">存储过程名字</param>
+        /// <returns></returns>
+        public string CreateProcSql(string procName)
+        {
+            string sql = @"select ROUTINE_DEFINITION
+from INFORMATION_SCHEMA.ROUTINES
+where ROUTINE_TYPE='PROCEDURE' and ROUTINE_NAME='" + procName + "'\r\n";
+            return GetFirstColumnString(sql);
+        }
+
+        /// <summary>根据函数名生成函数的创建语句</summary>
+        /// <param name="funcName">函数名称</param>
+        /// <returns></returns>
+        public string CreateFuncSql(string funcName)
+        {
+            string sql = @"sp_helptext '" + funcName + "'";
+            DataTable dt = GetDataTable(sql);
+            StringBuilder sb = new StringBuilder();
+            if (dt.Rows.Count > 0)
+            {
+                for (int ii = 0; ii < dt.Rows.Count; ii++)
+                {
+                    sb.Append(dt.Rows[ii][0].ToString());
+                }
+            }
+            return sb.ToString();
+        }
+
+
+        /// <summary>根据表名称和过滤条件生成表数据的insert语句</summary>
+        /// <param name="tblName">表结构</param>
+        /// <param name="Count">生成的insert语句的个数</param>
+        /// <param name="filter">过滤条件</param>
+        /// <returns></returns>
+        public string GeneInsertSql(string tblName, ref int Count, string filter = "1=1")
+        {
+            DataTable dt = GetDataTable("exec usp_CreateInsertScript '" + tblName + "','" + filter + "'");
+            StringBuilder sb = new StringBuilder();
+            sb.AppendLine();
+            for (int i = 0; i < dt.Rows.Count; i++)
+            {
+                sb.AppendLine(dt.Rows[i][0].ToString());
+            }
+            sb.AppendLine();
+            Count = dt.Rows.Count;
+            return sb.ToString();
+        }
+
+        #region string sqlExportDataProc 表数据导出insert语句的存储过程语句
+        string sqlExportDataProc = @"
+-- ============================================= 
+-- Author: 胡庆杰 
+-- Create date: 2017-1-10 
+-- Description: 将表数据生成Insert脚本 
+-- Demo : exec usp_CreateInsertScript 'SYSUSER','1=1' 
+-- ============================================= 
+create proc [dbo].usp_CreateInsertScript (@tablename varchar(256),@con nvarchar(400)) 
+as 
+begin 
+set nocount on 
+declare @sqlstr varchar(4000) 
+declare @sqlstr1 varchar(4000) 
+declare @sqlstr2 varchar(4000) 
+select @sqlstr='select ''insert '+@tablename 
+select @sqlstr1='' 
+select @sqlstr2='(' 
+select @sqlstr1='values (''+' 
+select @sqlstr1=@sqlstr1+col+'+'',''+' ,@sqlstr2=@sqlstr2+name +',' from (select case 
+when a.xtype =173 then 'case when '+a.name+' is null then ''NULL'' else '+'convert(varchar('+convert(varchar(4),a.length*2+2)+'),'+a.name +')'+' end' 
+when a.xtype =104 then 'case when '+a.name+' is null then ''NULL'' else '+'convert(varchar(1),'+a.name +')'+' end' 
+when a.xtype =175 then 'case when '+a.name+' is null then ''NULL'' else '+'''''''''+'+'replace('+a.name+','''''''','''''''''''')' + '+'''''''''+' end' 
+when a.xtype =61 then 'case when '+a.name+' is null then ''NULL'' else '+'''''''''+'+'convert(varchar(23),'+a.name +',121)'+ '+'''''''''+' end' 
+when a.xtype =106 then 'case when '+a.name+' is null then ''NULL'' else '+'convert(varchar('+convert(varchar(4),a.xprec+2)+'),'+a.name +')'+' end' 
+when a.xtype =62 then 'case when '+a.name+' is null then ''NULL'' else '+'convert(varchar(23),'+a.name +',2)'+' end' 
+when a.xtype =56 then 'case when '+a.name+' is null then ''NULL'' else '+'convert(varchar(11),'+a.name +')'+' end' 
+when a.xtype =60 then 'case when '+a.name+' is null then ''NULL'' else '+'convert(varchar(22),'+a.name +')'+' end' 
+when a.xtype =239 then 'case when '+a.name+' is null then ''NULL'' else '+'''''''''+'+'replace('+a.name+','''''''','''''''''''')' + '+'''''''''+' end' 
+when a.xtype =108 then 'case when '+a.name+' is null then ''NULL'' else '+'convert(varchar('+convert(varchar(4),a.xprec+2)+'),'+a.name +')'+' end' 
+when a.xtype =231 then 'case when '+a.name+' is null then ''NULL'' else '+'''''''''+'+'replace('+a.name+','''''''','''''''''''')' + '+'''''''''+' end' 
+when a.xtype =59 then 'case when '+a.name+' is null then ''NULL'' else '+'convert(varchar(23),'+a.name +',2)'+' end' 
+when a.xtype =58 then 'case when '+a.name+' is null then ''NULL'' else '+'''''''''+'+'convert(varchar(23),'+a.name +',121)'+ '+'''''''''+' end' 
+when a.xtype =52 then 'case when '+a.name+' is null then ''NULL'' else '+'convert(varchar(12),'+a.name +')'+' end' 
+when a.xtype =122 then 'case when '+a.name+' is null then ''NULL'' else '+'convert(varchar(22),'+a.name +')'+' end' 
+when a.xtype =127 then 'case when '+a.name+' is null then ''NULL'' else '+'convert(varchar(6),'+a.name +')'+' end' 
+when a.xtype =48 then 'case when '+a.name+' is null then ''NULL'' else '+'convert(varchar(6),'+a.name +')'+' end' 
+when a.xtype =165 then 'case when '+a.name+' is null then ''NULL'' else '+'convert(varchar('+convert(varchar(4),a.length*2+2)+'),'+a.name +')'+' end' 
+when a.xtype =167 then 'case when '+a.name+' is null then ''NULL'' else '+'''''''''+'+'replace('+a.name+','''''''','''''''''''')' + '+'''''''''+' end' 
+else '''NULL''' 
+end as col,a.colid,a.name 
+from syscolumns a where a.id = object_id(@tablename) 
+--
+and a.name not in(SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.columns c where c.TABLE_NAME=@tablename and COLUMNPROPERTY(      
+      OBJECT_ID(@tablename),COLUMN_NAME,'IsIdentity')=1)
+--
+and a.xtype <>189 and a.xtype <>34 and a.xtype <>35 and a.xtype <>36 
+)t order by colid 
+select @sqlstr=@sqlstr+left(@sqlstr2,len(@sqlstr2)-1)+') '+left(@sqlstr1,len(@sqlstr1)-3)+')'' from '+@tablename + ' where 1=1 and ' + isnull(@con,'') 
+print @sqlstr 
+exec( @sqlstr) 
+set nocount off 
+end
+
+";
+        #endregion
     }
 }
