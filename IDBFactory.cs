@@ -159,5 +159,10 @@ namespace DBUtil
             return iDb;
         }
 
+        /// <summary>
+        /// 不要在程序运行环境中修改此值,但可以在应用程序启动时进行赋值
+        /// </summary>
+        public static IDSNOManager IDSNOManage = new SimpleIDSNOManager();
+
     }
 }

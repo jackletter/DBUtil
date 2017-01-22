@@ -5,11 +5,13 @@ using System.Collections;
 using System.Linq;
 using System.Text;
 using System.Data;
+using System.Text.RegularExpressions;
 
 namespace DBUtil
 {
     public class SqlServerIDbAccess : IDbAccess
     {
+        public IDSNOManager IDSNOManager { get { return IDBFactory.IDSNOManage; } }
         public bool IsKeepConnect { set; get; }
         public IDbTransaction tran { set; get; }
         public string ConnectionString { get; set; }
@@ -890,57 +892,6 @@ namespace DBUtil
             throw new NotImplementedException();
         }
 
-        #region 生成ID，控制表为Seq_tbl,没生成一次序列自动加1 public int SetID(string TableName)
-        /// <summary>
-        /// 生成ID，控制表为Seq_tbl,没生成一次序列自动加1
-        /// </summary>
-        /// <param name="TableName">要生成ID的表名</param>
-        /// <returns>生成的ID值</returns>
-        public int SetID(string TableName)
-        {
-            string sql = "select ID from Seq_tbl where TableName='" + TableName + "'";
-            DataSet ds = GetDataSet(sql);
-            if (ds.Tables[0].Rows.Count == 0)
-            {
-                sql = "insert into Seq_tbl values('" + TableName + "',1)";
-                ExecuteSql(sql);
-                return 1;
-            }
-            else
-            {
-
-                int i = int.Parse(ds.Tables[0].Rows[0][0].ToString()) + 1;
-                sql = "update Seq_tbl set ID=" + i + " where TableName='" + TableName + "'";
-                ExecuteSql(sql);
-                return i;
-            }
-        }
-        #endregion
-
-        #region 重设置一个表的ID值 public bool ResetID(string TableName, string IDColumn)
-        /// <summary>
-        /// 重设置一个表的ID值
-        /// </summary>
-        /// <param name="TableName">表名</param>
-        /// <param name="IDColumn">列名</param>
-        /// <returns>是否重置成功</returns>
-        public bool ResetID(string TableName, string IDColumn)
-        {
-            string sql = "select max(" + IDColumn + ") from Seq_tbl where TableName='" + TableName + "'";
-            string id = GetFirstColumn(sql).ToString();
-            if (string.IsNullOrWhiteSpace(id))
-            {
-                sql = "delete from Seq_tbl where TableName='" + TableName + "'";
-            }
-            else
-            {
-                sql = "update Seq_tbl set ID=" + id + " where TableName='" + TableName + "'";
-            }
-            ExecuteSql(sql);
-            return true;
-        }
-        #endregion
-
         #region 获得指定表的表结构说明 public TableStruct GetTableStruct(string tableName)
         /// <summary>获得指定表的表结构说明</summary>
         /// <param name="tableName">表名</param>
@@ -1307,6 +1258,7 @@ where ROUTINE_TYPE='PROCEDURE'";
             return res;
         }
         #endregion
+
         #region 重命名指定表 public void RenameTable(string oldTableName, string newTableName)
         /// <summary>重命名指定表</summary>
         /// <param name="oldTableName">旧表名</param>
@@ -1347,7 +1299,6 @@ FROM fn_listextendedproperty ('MS_Description', 'schema', 'dbo', 'table', '{0}',
             ExecuteSql(sql);
         }
         #endregion
-
         #region 重命名列名 public void RenameColumn(string tableName, string oldColumnName, string newColumnName)
         /// <summary>重命名列名</summary>
         /// <param name="tableName">表名</param>
@@ -1360,7 +1311,6 @@ FROM fn_listextendedproperty ('MS_Description', 'schema', 'dbo', 'table', '{0}',
             ExecuteSql(sql);
         }
         #endregion
-
         #region 删除指定表的指定列 public void DropColumn(string tableName, string columnName)
         /// <summary>删除指定表的指定列</summary>
         /// <param name="tableName">表名</param>
@@ -1373,7 +1323,6 @@ FROM fn_listextendedproperty ('MS_Description', 'schema', 'dbo', 'table', '{0}',
 
         }
         #endregion
-
         #region 保存指定表的指定列的说明信息 public void SaveColumnDesc(string tableName, string columnName, string desc)
         /// <summary>保存指定表的指定列的说明信息</summary>
         /// <param name="tableName">表名</param>
@@ -1394,7 +1343,6 @@ FROM fn_listextendedproperty ('MS_Description', 'schema', 'dbo', 'table', '{0}',
             ExecuteSql(sql);
         }
         #endregion
-
         /// <summary>改变指定表的指定列类型</summary>
         /// <param name="tableName">表名</param>
         /// <param name="columnName">列名</param>
@@ -1817,7 +1765,6 @@ where ROUTINE_TYPE='PROCEDURE' and ROUTINE_NAME='" + procName + "'\r\n";
             }
             return sb.ToString();
         }
-
 
         /// <summary>根据表名称和过滤条件生成表数据的insert语句</summary>
         /// <param name="tblName">表结构</param>

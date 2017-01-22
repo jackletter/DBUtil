@@ -61,11 +61,14 @@
     <Compile Include="GridProp.cs" />
     <Compile Include="IDbAccess.cs" />
     <Compile Include="IDBFactory.cs" />
+    <Compile Include="IDSNOManager.cs" />
     <Compile Include="MySqlIDbAccess.cs" />
     <Compile Include="OleIDbBase.cs" />
     <Compile Include="OracleIDbAccess.cs" />
     <Compile Include="Result.cs" />
     <Compile Include="SearchResult.cs" />
+    <Compile Include="SerialChunk.cs" />
+    <Compile Include="SimpleIDSNOManager.cs" />
     <Compile Include="SQLiteIDbAccess.cs" />
     <Compile Include="SqlServerIDbAccess.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

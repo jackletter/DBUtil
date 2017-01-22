@@ -9,6 +9,7 @@ namespace DBUtil
 {
     public interface IDbAccess : IDisposable
     {
+        IDSNOManager IDSNOManager { get; }
         bool IsKeepConnect { get; set; }
         IDbTransaction tran { get; set; }
 
@@ -210,16 +211,5 @@ namespace DBUtil
         /// <summary>返回所有的视图</summary>
         /// <returns>返回所有的视图</returns>
         List<DataView> ShowViews();
-
-        /// <summary>生成一个表的新纪录的ID</summary>
-        /// <param name="TableName">要生成ID的表名</param>
-        /// <returns>返回新的ID</returns>
-        int SetID(string TableName);
-
-        /// <summary>重设置一个表的ID值</summary>
-        /// <param name="TableName">表名</param>
-        /// <param name="IDColumn">列名</param>
-        /// <returns>是否重置成功</returns>
-        bool ResetID(string TableName, string IDColumn);
     }
 }

@@ -10,6 +10,7 @@ namespace DBUtil
 {
     public class MySqlIDbAccess : IDbAccess
     {
+        public IDSNOManager IDSNOManager { get { return IDBFactory.IDSNOManage; } }
         public bool IsKeepConnect { set; get; }
         public IDbTransaction tran { set; get; }
         public string ConnectionString { get; set; }
@@ -873,56 +874,5 @@ namespace DBUtil
         {
             throw new NotImplementedException();
         }
-
-        #region 生成ID，控制表为Seq_tbl,没生成一次序列自动加1 public int SetID(string TableName)
-        /// <summary>
-        /// 生成ID，控制表为Seq_tbl,没生成一次序列自动加1
-        /// </summary>
-        /// <param name="TableName">要生成ID的表名</param>
-        /// <returns>生成的ID值</returns>
-        public int SetID(string TableName)
-        {
-            string sql = "select ID from Seq_tbl where TableName='" + TableName + "'";
-            DataSet ds = GetDataSet(sql);
-            if (ds.Tables[0].Rows.Count == 0)
-            {
-                sql = "insert into Seq_tbl values('" + TableName + "',1)";
-                ExecuteSql(sql);
-                return 1;
-            }
-            else
-            {
-
-                int i = int.Parse(ds.Tables[0].Rows[0][0].ToString()) + 1;
-                sql = "update Seq_tbl set ID=" + i + " where TableName='" + TableName + "'";
-                ExecuteSql(sql);
-                return i;
-            }
-        }
-        #endregion
-
-        #region 重设置一个表的ID值 public bool ResetID(string TableName, string IDColumn)
-        /// <summary>
-        /// 重设置一个表的ID值
-        /// </summary>
-        /// <param name="TableName">表名</param>
-        /// <param name="IDColumn">列名</param>
-        /// <returns>是否重置成功</returns>
-        public bool ResetID(string TableName, string IDColumn)
-        {
-            string sql = "select max(" + IDColumn + ") from Seq_tbl where TableName='" + TableName + "'";
-            string id = GetFirstColumn(sql).ToString();
-            if (string.IsNullOrWhiteSpace(id))
-            {
-                sql = "delete from Seq_tbl where TableName='" + TableName + "'";
-            }
-            else
-            {
-                sql = "update Seq_tbl set ID=" + id + " where TableName='" + TableName + "'";
-            }
-            ExecuteSql(sql);
-            return true;
-        }
-        #endregion
     }
 }
