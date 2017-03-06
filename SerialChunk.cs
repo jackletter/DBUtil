@@ -20,6 +20,7 @@ namespace DBUtil
         }
 
         private string _name;
+
         /// <summary>
         /// 每个chunk都要有一个名字,这个名字作为编号生成锁的一部分
         /// <para>io</para>
@@ -27,6 +28,7 @@ namespace DBUtil
         public string Name { get { return this._name; } }
 
         private string _formatstr;
+
         /// <summary>
         ///     <para>写法:不允许出现多余的空格等字符,严格按格式填写(注意大小写)</para>
         ///     <para>SerialNo[start,incr,len,end,cyclemodel][varlen]</para>

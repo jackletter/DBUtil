@@ -57,6 +57,15 @@ namespace DBUtil
             return new MySqlParameter();
         }
         #endregion
+
+        #region 创建参数 public IDbDataParameter CreatePara(string name, object value)
+        /// <summary>创建具有名称和值的参数</summary>
+        /// <returns>针对当前数据库类型的参数对象</returns>
+        public IDbDataParameter CreatePara(string name, object value)
+        {
+            return new MySqlParameter(name, value);
+        }
+        #endregion
         #region 根据指定日期范围生成过滤字符串 public string GetDateFilter(string dateColumn, string minDate, string MaxDate, bool isMinInclude, bool isMaxInclude)
         /// <summary>根据指定日期范围生成过滤字符串</summary>
         /// <param name="dateColumn">要进行过滤的字段名称</param>

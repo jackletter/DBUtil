@@ -58,6 +58,15 @@ namespace DBUtil
             return new SqlParameter();
         }
         #endregion
+
+        #region 创建参数 public IDbDataParameter CreatePara(string name, object value)
+        /// <summary>创建具有名称和值的参数</summary>
+        /// <returns>针对当前数据库类型的参数对象</returns>
+        public IDbDataParameter CreatePara(string name, object value)
+        {
+            return new SqlParameter(name, value);
+        }
+        #endregion
         #region 根据指定日期范围生成过滤字符串 public string GetDateFilter(string dateColumn, string minDate, string MaxDate, bool isMinInclude, bool isMaxInclude)
         /// <summary>根据指定日期范围生成过滤字符串</summary>
         /// <param name="dateColumn">要进行过滤的字段名称</param>
@@ -1793,13 +1802,13 @@ where ROUTINE_TYPE='PROCEDURE' and ROUTINE_NAME='" + procName + "'\r\n";
 -- Description: 将表数据生成Insert脚本 
 -- Demo : exec usp_CreateInsertScript 'SYSUSER','1=1' 
 -- ============================================= 
-create proc [dbo].usp_CreateInsertScript (@tablename varchar(256),@con nvarchar(400)) 
+create proc [dbo].usp_CreateInsertScript (@tablename varchar(400),@con nvarchar(1000)) 
 as 
 begin 
 set nocount on 
-declare @sqlstr varchar(4000) 
-declare @sqlstr1 varchar(4000) 
-declare @sqlstr2 varchar(4000) 
+declare @sqlstr varchar(max) 
+declare @sqlstr1 varchar(max) 
+declare @sqlstr2 varchar(max) 
 select @sqlstr='select ''insert '+@tablename 
 select @sqlstr1='' 
 select @sqlstr2='(' 

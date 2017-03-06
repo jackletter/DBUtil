@@ -22,14 +22,14 @@ namespace DBUtil
             {
                 get
                 {
-                    if ((Type.Contains("char")
-                        || Type.Contains("binary")
-                        || Type.Contains("datetime2")
-                        || Type.Contains("datetimeoffset")
-                        || Type.Contains("decimal")
-                        || Type.Contains("numeric")
-                        || Type.Contains("time"))
-                        && (!Type.Contains("(")) && MaxLength > 0)
+                    if ((Type.Contains("binary")
+                        || Type.Contains("char")
+                        || Type == "datetime2"
+                        || Type == "datetimeoffset"
+                        || Type == "decimal"
+                        || Type == "numeric"
+                        || Type == "time")
+                        && (!Type.Contains("(")))
                     {
                         //采取的是Type和MaxLength分离的方式
                         return Type + "(" + (MaxLength == -1 ? "max" : MaxLength.ToString()) + ")";

@@ -35,6 +35,10 @@ namespace DBUtil
         /// <returns>针对当前数据库类型的空参数对象</returns>
         IDbDataParameter CreatePara();
 
+        /// <summary>创建具有名称和值的参数</summary>
+        /// <returns>针对当前数据库类型的参数对象</returns>
+        IDbDataParameter CreatePara(string name, object value);
+
         /// <summary>根据指定日期范围生成过滤字符串</summary>
         /// <param name="dateColumn">要进行过滤的字段名称</param>
         /// <param name="minDate">最小日期</param>

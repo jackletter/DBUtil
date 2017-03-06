@@ -11,6 +11,20 @@ namespace DBUtil
 {
     public class IDBFactory
     {
+        /// <summary>
+        /// 创建IDB对象
+        /// </summary>
+        /// <param name="connStr">
+        /// <para>连接字符串:</para>
+        /// <para>SQLSERVER:   Data Source=.;Initial Catalog=JACKOA;User ID=sa;Password=sa;</para>
+        /// <para>ORACLE:   Data Source=ORCLmyvm2;Password=sys123;User ID=sys;DBA Privilege=SYSDBA;</para>
+        /// <para>MYSQL:   Data Source=localhost;Initial Catalog=test;User ID=root;Password=hujie110;</para>
+        /// <para>ACCESS:   Provider=Microsoft.Jet.OLEDB.4.0;Data Source=G:\work\宁夏多规合一\Multiplan.mdb;</para>
+        /// <para>ACCESS:   Provider=Microsoft.ACE.OLEDB.12.0;Data Source=C:\Users\Administrator\Desktop\demo.accdb;</para>
+        /// <para>SQLITE:   Data Source=f:\demo.db;</para>
+        /// </param>
+        /// <param name="DBType">数据库类型:SQLSERVER、ORACLE、MYSQL、SQLITE、ACCESS</param>
+        /// <returns></returns>
         public static IDbAccess CreateIDB(string connStr, string DBType)
         {
             if (DBType == "SQLSERVER")
@@ -26,7 +40,7 @@ namespace DBUtil
             }
             else if (DBType == "MYSQL")
             {
-                //使用单独一个方法,防止在下面代码访问不到的情况下仍会因没有mysq组件而报错
+                //使用单独一个方法,防止在下面代码访问不到的情况下仍会因没有mysql组件而报错
                 return CreateMySql(connStr);
             }
             else if (DBType == "ORACLE")
@@ -41,7 +55,7 @@ namespace DBUtil
                 {
                     conn = conn,
                     ConnectionString = connStr,
-                    DataBaseType = DataBaseType.ORACLE
+                    DataBaseType = DataBaseType.ACCESS
                 };
                 return iDb;
             }
@@ -159,8 +173,7 @@ namespace DBUtil
             return iDb;
         }
 
-        /// <summary>
-        /// 不要在程序运行环境中修改此值,但可以在应用程序启动时进行赋值
+        /// <summary>不要在程序运行环境中修改此值,但可以在应用程序启动时进行赋值
         /// </summary>
         public static IDSNOManager IDSNOManage = new SimpleIDSNOManager();
 
