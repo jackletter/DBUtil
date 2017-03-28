@@ -31,11 +31,13 @@ namespace DBUtil
         /// <summary>当前数据库使用的参数的前缀符号</summary>
         string paraPrefix { get; }
 
-        /// <summary>创建参数</summary>
+        /// <summary>创建参数
+        /// </summary>
         /// <returns>针对当前数据库类型的空参数对象</returns>
         IDbDataParameter CreatePara();
 
-        /// <summary>创建具有名称和值的参数</summary>
+        /// <summary>创建具有名称和值的参数
+        /// </summary>
         /// <returns>针对当前数据库类型的参数对象</returns>
         IDbDataParameter CreatePara(string name, object value);
 
@@ -48,17 +50,20 @@ namespace DBUtil
         /// <returns>返回生成的过滤字符串</returns>
         string GetDateFilter(string dateColumn, string minDate, string MaxDate, bool isMinInclude, bool isMaxInclude);
 
-        /// <summary>执行sql语句</summary>
+        /// <summary>执行sql语句
+        /// </summary>
         /// <param name="strSql">要执行的sql语句</param>
         /// <returns>受影响的行数</returns>
         int ExecuteSql(string strSql);
 
-        /// <summary>执行sql语句</summary>
+        /// <summary>执行sql语句
+        /// </summary>
         /// <param name="strSql">要执行的sql语句</param>
         /// <returns>受影响的行数</returns>
         int ExecuteSql(string strSql, IDataParameter[] paramArr);
 
-        /// <summary>执行多个sql语句</summary>
+        /// <summary>执行多个sql语句
+        /// </summary>
         /// <param name="strSql">多个SQL语句的数组</param>
         /// <returns>返回是否执行成功</returns>
         void ExecuteSql(string[] strSql);
@@ -69,20 +74,23 @@ namespace DBUtil
         /// <returns>返回是否执行成功</returns>
         void ExecuteSql(string[] strSql, IDataParameter[][] paraArrs);
 
-        /// <summary>向一个表中添加一行数据</summary>
+        /// <summary>向一个表中添加一行数据
+        /// </summary>
         /// <param name="tableName">表名</param>
         /// <param name="ht">列名和值得键值对</param>
         /// <returns>返回是受影响的行数</returns>
         bool AddData(string tableName, Hashtable ht);
 
-        /// <summary>根据键值表ht中的数据向表中更新数据</summary>
+        /// <summary>根据键值表ht中的数据向表中更新数据
+        /// </summary>
         /// <param name="tableName">表名</param>
         /// <param name="ht">键值表</param>
         /// <param name="filterStr">过滤条件以and开头</param>
         /// <returns>是否更新成功</returns>
         bool UpdateData(string tableName, Hashtable ht, string filterStr);
 
-        /// <summary>根据键值表ht中的数据向表中更新数据</summary>
+        /// <summary>根据键值表ht中的数据向表中更新数据
+        /// </summary>
         /// <param name="tableName">表名</param>
         /// <param name="ht">键值表</param>
         /// <param name="filterStr">过滤条件以and开头</param>
@@ -90,7 +98,8 @@ namespace DBUtil
         /// <returns>是否更新成功</returns>
         bool UpdateData(string tableName, Hashtable ht, string filterStr, IDbDataParameter[] paraArr);
 
-        /// <summary>向表中更新数据并根据ht里面的键值对作为关键字更新(关键字默认不参与更新)</summary>
+        /// <summary>向表中更新数据并根据ht里面的键值对作为关键字更新(关键字默认不参与更新)
+        /// </summary>
         /// <param name="tableName">表名</param>
         /// <param name="ht">键值表</param>
         /// <param name="keys">关键字集合</param>
@@ -98,94 +107,130 @@ namespace DBUtil
         /// <returns>是否更新成功</returns>
         bool UpdateData(string tableName, Hashtable ht, List<string> keys, bool isKeyAttend = false);
 
-        /// <summary>删除一行</summary>
+        /// <summary>根据键值表ht中的数据向表中添加或更新数据
+        /// </summary>
+        /// <param name="tableName">表名</param>
+        /// <param name="ht">键值表</param>
+        /// <param name="filterStr">过滤条件以and开头</param>
+        /// <returns>是否更新成功</returns>
+        bool UpdateOrAdd(string tableName, Hashtable ht, string filterStr);
+
+        /// <summary>根据键值表ht中的数据向表中添加或更新数据
+        /// </summary>
+        /// <param name="tableName">表名</param>
+        /// <param name="ht">键值表</param>
+        /// <param name="filterStr">过滤条件以and开头</param>
+        /// <param name="paraArr">过滤条件中的参数数组</param>
+        /// <returns>是否更新成功</returns>
+        bool UpdateOrAdd(string tableName, Hashtable ht, string filterStr, IDbDataParameter[] paraArr);
+
+        /// <summary>向表中添加或更新数据并根据ht里面的键值对作为关键字更新(关键字默认不参与更新)
+        /// </summary>
+        /// <param name="tableName">表名</param>
+        /// <param name="ht">键值表</param>
+        /// <param name="keys">关键字集合</param>
+        /// <param name="isKeyAttend">关键字是否参与到更新中</param>
+        /// <returns>是否更新成功</returns>
+        bool UpdateOrAdd(string tableName, Hashtable ht, List<string> keys, bool isKeyAttend = false);
+
+        /// <summary>删除一行
+        /// </summary>
         /// <param name="tableName">表名</param>
         /// <param name="strFilter">过滤条件</param>
         /// <returns>返回受影响的行数</returns>
         int DeleteTableRow(string tableName, string strFilter);
 
-        /// <summary>删除一行</summary>
+        /// <summary>删除一行
+        /// </summary>
         /// <param name="tableName">表名</param>
         /// <param name="strFilter">过滤条件</param>
         /// <param name="paraArr">过滤条件中的参数集合</param>
         /// <returns>返回受影响的行数</returns>
         int DeleteTableRow(string tableName, string strFilter, IDbDataParameter[] paraArr);
 
-        /// <summary>返回查到的第一行第一列的值</summary>
+        /// <summary>返回查到的第一行第一列的值
+        /// </summary>
         /// <param name="strSql">sql语句</param>
         /// <returns>返回查到的第一行第一列的值</returns>
         object GetFirstColumn(string strSql);
 
-        /// <summary>返回查到的第一行第一列的值</summary>
+        /// <summary>返回查到的第一行第一列的值
+        /// </summary>
         /// <param name="strSql">sql语句</param>
         /// <param name="paraArr">sql语句参数</param>
         /// <returns>返回查到的第一行第一列的值</returns>
         object GetFirstColumn(string strSql, IDbDataParameter[] paraArr);
 
-        /// <summary>返回查到的第一行第一列的字符串值</summary>
+        /// <summary>返回查到的第一行第一列的字符串值
+        /// </summary>
         /// <param name="strSql">sql语句</param>
         /// <param name="isReturnNull">false:查询结果为null就返回""否则返回null</param>
         /// <returns>返回查到的第一行第一列的值</returns>
         string GetFirstColumnString(string strSql, bool isReturnNull = false);
 
-        /// <summary>返回查到的第一行第一列的字符串值</summary>
+        /// <summary>返回查到的第一行第一列的字符串值
+        /// </summary>
         /// <param name="strSql">sql语句</param>
         /// <param name="paraArr">sql语句中的参数数组</param>
         /// <param name="isReturnNull">false:查询结果为null就返回""否则返回null</param>
         /// <returns>返回查到的第一行第一列的值</returns>
         string GetFirstColumnString(string strSql, IDbDataParameter[] paraArr, bool isReturnNull = false);
 
-        /// <summary>获取阅读器</summary>
+        /// <summary>获取阅读器
+        /// </summary>
         /// <param name="strSql">sql语句</param>
         /// <returns>返回阅读器</returns>
         IDataReader GetDataReader(string strSql);
 
-        /// <summary>获取阅读器</summary>
+        /// <summary>获取阅读器
+        /// </summary>
         /// <param name="strSql">sql语句</param>
         /// <param name="paraArr">sql语句参数</param>
         /// <returns>返回阅读器</returns>
         IDataReader GetDataReader(string strSql, IDbDataParameter[] paraArr);
 
-        /// <summary>返回查询结果的数据集</summary>
+        /// <summary>返回查询结果的数据集
+        /// </summary>
         /// <param name="strSql">sql语句</param>
         /// <returns>返回的查询结果集</returns>
         DataSet GetDataSet(string strSql);
 
-        /// <summary>返回查询结果的数据集</summary>
+        /// <summary>返回查询结果的数据集
+        /// </summary>
         /// <param name="strSql">sql语句</param>
         /// <param name="paraArr">sql语句参数</param>
         /// <returns>返回的查询结果集</returns>
         DataSet GetDataSet(string strSql, IDbDataParameter[] paraArr);
 
-        /// <summary>返回查询结果的数据表</summary>
+        /// <summary>返回查询结果的数据表
+        /// </summary>
         /// <param name="strSql">sql语句</param>
         /// <param name="paraArr">sql语句参数</param>
         /// <returns>返回的查询结果集</returns>
         DataTable GetDataTable(string strSql);
 
-        /// <summary>返回查询结果的数据表</summary>
+        /// <summary>返回查询结果的数据表
+        /// </summary>
         /// <param name="strSql">sql语句</param>
         /// <param name="paraArr">sql语句参数</param>
         /// <returns>返回的查询结果集</returns>
         DataTable GetDataTable(string strSql, IDbDataParameter[] paraArr);
 
-        /// <summary>
-        /// 开启事务
+        /// <summary>开启事务
         /// </summary>
         void BeginTrans();
 
-        /// <summary>
-        /// 提交事务
+        /// <summary>提交事务
         /// </summary>
         void Commit();
 
-        /// <summary>
-        /// 回滚事务
+        /// <summary>回滚事务
         /// </summary>
         void Rollback();
 
 
-        /// <summary>获得分页的查询语句</summary>
+        /// <summary>获得分页的查询语句
+        /// </summary>
         /// <param name="tableName">表名</param>
         /// <param name="selectColumns">要查询的列,为null是表示所有列</param>
         /// <param name="PageSize">分页大小</param>
@@ -197,22 +242,26 @@ namespace DBUtil
 
         string GetSqlForPageSize(string selectSql, string strOrder, int PageSize, int PageIndex);
 
-        /// <summary>判断指定表或视图中是否有某一列</summary>
+        /// <summary>判断指定表或视图中是否有某一列
+        /// </summary>
         /// <param name="tableName">表或视图名</param>
         /// <param name="columnName">列名</param>
         /// <returns>返回列是否存在</returns>
         bool JudgeColumnExist(string tableName, string columnName);
 
-        /// <summary>返回表或视图是否存在</summary>
+        /// <summary>返回表或视图是否存在
+        /// </summary>
         /// <param name="tableName">表或视图名</param>
         /// <returns>返回表或视图是否存在</returns>
         bool JudgeTableOrViewExist(string tableName);
 
-        /// <summary>返回所有的表</summary>
+        /// <summary>返回所有的表
+        /// </summary>
         /// <returns>返回所有的表</returns>
         List<TableStruct> ShowTables();
 
-        /// <summary>返回所有的视图</summary>
+        /// <summary>返回所有的视图
+        /// </summary>
         /// <returns>返回所有的视图</returns>
         List<DataView> ShowViews();
     }

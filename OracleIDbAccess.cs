@@ -19,7 +19,8 @@ namespace DBUtil
 
         public bool IsOpen { set; get; }
 
-        /// <summary>打开连接测试</summary>
+        /// <summary>打开连接测试
+        /// </summary>
         /// <returns></returns>
         public Result OpenTest()
         {
@@ -47,27 +48,27 @@ namespace DBUtil
         /// <summary>当前数据库使用的参数的前缀符号</summary>
         public string paraPrefix { get { return ":"; } }
 
-        #region 创建参数 public IDbDataParameter CreatePara()
-        /// <summary>
-        /// 创建参数
+
+        /// <summary>创建参数
         /// </summary>
         /// <returns></returns>
         public IDbDataParameter CreatePara()
         {
             return new OracleParameter();
         }
-        #endregion
 
-        #region 创建参数 public IDbDataParameter CreatePara(string name, object value)
-        /// <summary>创建具有名称和值的参数</summary>
+
+        /// <summary>创建具有名称和值的参数
+        /// </summary>
         /// <returns>针对当前数据库类型的参数对象</returns>
         public IDbDataParameter CreatePara(string name, object value)
         {
             return new OracleParameter(name, value);
         }
-        #endregion        
-        #region 根据指定日期范围生成过滤字符串 public string GetDateFilter(string dateColumn, string minDate, string MaxDate, bool isMinInclude, bool isMaxInclude)
-        /// <summary>根据指定日期范围生成过滤字符串</summary>
+
+
+        /// <summary>根据指定日期范围生成过滤字符串
+        /// </summary>
         /// <param name="dateColumn">要进行过滤的字段名称</param>
         /// <param name="minDate">最小日期</param>
         /// <param name="MaxDate">最大日期</param>
@@ -103,11 +104,10 @@ namespace DBUtil
                 throw new Exception("非正确的格式:[" + minDate + "]或[" + maxDate + "]");
             }
         }
-        #endregion
 
-        #region 执行sql语句 public int ExecuteSql(string strSql)
-        /// <summary>
-        /// 执行sql语句
+
+
+        /// <summary>执行sql语句
         /// </summary>
         /// <param name="strSql">要执行的sql语句</param>
         /// <returns>受影响的行数</returns>
@@ -147,11 +147,10 @@ namespace DBUtil
             }
 
         }
-        #endregion
 
-        #region 执行多个sql语句 public void ExecuteSql(string[] strSql)
-        /// <summary>
-        /// 执行多个sql语句
+
+
+        /// <summary>执行多个sql语句
         /// </summary>
         /// <param name="strSql">多个SQL语句的数组</param>
         public void ExecuteSql(string[] strSql)
@@ -192,11 +191,9 @@ namespace DBUtil
                 }
             }
         }
-        #endregion
 
-        #region 执行带参数的sql语句 public int ExecuteSql(string strSql, IDataParameter[] paramArr)
-        /// <summary>
-        /// 执行带参数的sql语句
+
+        /// <summary>执行带参数的sql语句
         /// </summary>
         /// <param name="strSql">要执行的sql语句</param>
         /// <param name="paramArr">参数数组</param>
@@ -237,11 +234,10 @@ namespace DBUtil
                 }
             }
         }
-        #endregion
 
-        #region 批量执行带参数的sql语句 public void ExecuteSql(string[] strSql, IDataParameter[][] paraArrs)
-        /// <summary>
-        /// 批量执行带参数的sql语句
+
+
+        /// <summary>批量执行带参数的sql语句
         /// </summary>
         /// <param name="strSql"></param>
         /// <param name="paraArrs"></param>
@@ -252,24 +248,42 @@ namespace DBUtil
                 ExecuteSql(strSql[i], paraArrs[i]);
             }
         }
-        #endregion
 
-        #region 向一个表中添加一行数据 public bool AddData(string tableName, Hashtable ht)
-        /// <summary>
-        /// 向一个表中添加一行数据
+
+
+        /// <summary>向一个表中添加一行数据
         /// </summary>
         /// <param name="tableName">表名</param>
         /// <param name="ht">列名和值得键值对</param>
         /// <returns>返回是受影响的行数</returns>
         public bool AddData(string tableName, Hashtable ht)
         {
+            DataTable dt = GetDataTable(string.Format(" select DATA_TYPE,COLUMN_NAME from user_tab_cols where table_name='{0}'", tableName.ToUpper()));
+            Hashtable ht_pre = new Hashtable();
+            if (dt.Rows.Count > 0)
+            {
+                for (int i = 0; i < dt.Rows.Count; i++)
+                {
+                    if (dt.Rows[i]["DATA_TYPE"].ToString().ToUpper() == "DATE")
+                    {
+                        ht_pre.Add(dt.Rows[i]["COLUMN_NAME"].ToString(), dt.Rows[i]["DATA_TYPE"].ToString());
+                    }
+                }
+            }
             string insertTableOption = "";
             string insertTableValues = "";
             List<IDbDataParameter> paras = new List<IDbDataParameter>();
             foreach (System.Collections.DictionaryEntry item in ht)
             {
                 insertTableOption += " " + item.Key.ToString() + ",";
-                insertTableValues += ":" + item.Key.ToString() + ",";
+                if (ht_pre.Contains(item.Key.ToString()))
+                {
+                    insertTableValues += "to_date(:" + item.Key.ToString() + ",'yyyy-MM-dd HH24:mi:ss'),";
+                }
+                else
+                {
+                    insertTableValues += ":" + item.Key.ToString() + ",";
+                }
                 paras.Add(new OracleParameter()
                 {
                     ParameterName = item.Key.ToString(),
@@ -282,11 +296,10 @@ namespace DBUtil
             string strSql = string.Format("insert into {0} ({1}) values ({2})", tableName, insertTableOption, insertTableValues);
             return ExecuteSql(strSql, paras.ToArray()) > 0 ? true : false;
         }
-        #endregion
 
-        #region 根据键值表ht中的数据向表中更新数据 public bool UpdateData(string tableName, Hashtable ht, string filterStr)
-        /// <summary>
-        /// 根据键值表ht中的数据向表中更新数据
+
+
+        /// <summary>根据键值表ht中的数据向表中更新数据
         /// </summary>
         /// <param name="tableName">表名</param>
         /// <param name="ht">键值表</param>
@@ -294,6 +307,19 @@ namespace DBUtil
         /// <returns>是否更新成功</returns>
         public bool UpdateData(string tableName, Hashtable ht, string filterStr)
         {
+            DataTable dt = GetDataTable(string.Format(" select DATA_TYPE,COLUMN_NAME from user_tab_cols where table_name='{0}'", tableName.ToUpper()));
+            Hashtable ht_pre = new Hashtable();
+            if (dt.Rows.Count > 0)
+            {
+                for (int i = 0; i < dt.Rows.Count; i++)
+                {
+                    if (dt.Rows[i]["DATA_TYPE"].ToString().ToUpper() == "DATE")
+                    {
+                        ht_pre.Add(dt.Rows[i]["COLUMN_NAME"].ToString(), dt.Rows[i]["DATA_TYPE"].ToString());
+                    }
+                }
+            }
+
             string sql = string.Format("update {0} set ", tableName);
             List<IDbDataParameter> paras = new List<IDbDataParameter>();
             foreach (System.Collections.DictionaryEntry item in ht)
@@ -304,7 +330,14 @@ namespace DBUtil
                 }
                 else
                 {
-                    sql += " " + item.Key.ToString() + "=:" + item.Key.ToString() + ",";
+                    if (ht_pre.Contains(item.Key.ToString()))
+                    {
+                        sql += " " + item.Key.ToString() + "=to_date(:" + item.Key.ToString() + ",'yyyy-MM-dd HH24:mi:ss'),";
+                    }
+                    else
+                    {
+                        sql += " " + item.Key.ToString() + "=:" + item.Key.ToString() + ",";
+                    }
                     paras.Add(new OracleParameter()
                     {
                         ParameterName = item.Key.ToString(),
@@ -317,11 +350,10 @@ namespace DBUtil
             sql += filterStr;
             return ExecuteSql(sql, paras.ToArray()) > 0 ? true : false;
         }
-        #endregion
 
-        #region 根据键值表ht中的数据向表中更新数据 public bool UpdateData(string tableName, Hashtable ht, string filterStr, IDbDataParameter[] paraArr)
-        /// <summary>
-        /// 根据键值表ht中的数据向表中更新数据
+
+
+        /// <summary>根据键值表ht中的数据向表中更新数据
         /// </summary>
         /// <param name="tableName">表名</param>
         /// <param name="ht">键值表</param>
@@ -330,6 +362,19 @@ namespace DBUtil
         /// <returns>是否更新成功</returns>
         public bool UpdateData(string tableName, Hashtable ht, string filterStr, IDbDataParameter[] paraArr)
         {
+            DataTable dt = GetDataTable(string.Format(" select DATA_TYPE,COLUMN_NAME from user_tab_cols where table_name='{0}'", tableName.ToUpper()));
+            Hashtable ht_pre = new Hashtable();
+            if (dt.Rows.Count > 0)
+            {
+                for (int i = 0; i < dt.Rows.Count; i++)
+                {
+                    if (dt.Rows[i]["DATA_TYPE"].ToString().ToUpper() == "DATE")
+                    {
+                        ht_pre.Add(dt.Rows[i]["COLUMN_NAME"].ToString(), dt.Rows[i]["DATA_TYPE"].ToString());
+                    }
+                }
+            }
+
             string sql = string.Format("update {0} set ", tableName);
             List<IDbDataParameter> paras = new List<IDbDataParameter>();
             foreach (System.Collections.DictionaryEntry item in ht)
@@ -340,7 +385,14 @@ namespace DBUtil
                 }
                 else
                 {
-                    sql += " " + item.Key.ToString() + "=:" + item.Key.ToString() + ",";
+                    if (ht_pre.Contains(item.Key.ToString()))
+                    {
+                        sql += " " + item.Key.ToString() + "=to_date(:" + item.Key.ToString() + ",'yyyy-MM-dd HH24:mi:ss'),";
+                    }
+                    else
+                    {
+                        sql += " " + item.Key.ToString() + "=:" + item.Key.ToString() + ",";
+                    }
                     paras.Add(new OracleParameter()
                     {
                         ParameterName = item.Key.ToString(),
@@ -360,11 +412,10 @@ namespace DBUtil
             }
             return ExecuteSql(sql, paras.ToArray()) > 0 ? true : false;
         }
-        #endregion
 
-        #region 向表中更新数据并根据ht里面的键值对作为关键字更新(关键字默认不参与更新) public bool UpdateData(string tableName, Hashtable ht, List<string> keys, bool isKeyAttend = false)
-        /// <summary>
-        /// 向表中更新数据并根据ht里面的键值对作为关键字更新(关键字默认不参与更新)
+
+
+        /// <summary>向表中更新数据并根据ht里面的键值对作为关键字更新(关键字默认不参与更新)
         /// </summary>
         /// <param name="tableName">表名</param>
         /// <param name="ht">键值表</param>
@@ -373,6 +424,19 @@ namespace DBUtil
         /// <returns>是否更新成功</returns>
         public bool UpdateData(string tableName, Hashtable ht, List<string> keys, bool isKeyAttend = false)
         {
+            DataTable dt = GetDataTable(string.Format(" select DATA_TYPE,COLUMN_NAME from user_tab_cols where table_name='{0}'", tableName.ToUpper()));
+            Hashtable ht_pre = new Hashtable();
+            if (dt.Rows.Count > 0)
+            {
+                for (int i = 0; i < dt.Rows.Count; i++)
+                {
+                    if (dt.Rows[i]["DATA_TYPE"].ToString().ToUpper() == "DATE")
+                    {
+                        ht_pre.Add(dt.Rows[i]["COLUMN_NAME"].ToString(), dt.Rows[i]["DATA_TYPE"].ToString());
+                    }
+                }
+            }
+
             string sql = string.Format("update {0} set ", tableName);
             List<IDbDataParameter> paras = new List<IDbDataParameter>();
             foreach (System.Collections.DictionaryEntry item in ht)
@@ -387,7 +451,14 @@ namespace DBUtil
                 }
                 else
                 {
-                    sql += " " + item.Key.ToString() + ":" + item.Key.ToString() + ",";
+                    if (ht_pre.Contains(item.Key.ToString()))
+                    {
+                        sql += " " + item.Key.ToString() + "=to_date(:" + item.Key.ToString() + ",'yyyy-MM-dd HH24:mi:ss'),";
+                    }
+                    else
+                    {
+                        sql += " " + item.Key.ToString() + "=:" + item.Key.ToString() + ",";
+                    }
                     IDbDataParameter para = new OracleParameter()
                     {
                         ParameterName = item.Key.ToString(),
@@ -403,7 +474,14 @@ namespace DBUtil
             sql += " where 1=1 ";
             foreach (var item in keys)
             {
-                sql += " and " + item + "=:" + item;
+                if (ht_pre.Contains(item.ToUpper().ToString()))
+                {
+                    sql += " and " + item + "=to_date(:" + item + ",'yyyy-MM-dd HH24:mi:ss')";
+                }
+                else
+                {
+                    sql += " and " + item + "=:" + item;
+                }
                 paras.Add(new OracleParameter()
                 {
                     ParameterName = item,
@@ -412,11 +490,71 @@ namespace DBUtil
             }
             return ExecuteSql(sql, paras.ToArray()) > 0 ? true : false;
         }
-        #endregion
 
-        #region  判断参数集合list中是否包含同名的参数para,如果已存在返回true,否则返回false private bool ContainsDBParameter(List<IDbDataParameter> list, IDbDataParameter para)
-        /// <summary>
-        /// 判断参数集合list中是否包含同名的参数para,如果已存在返回true,否则返回false
+        /// <summary>根据键值表ht中的数据向表中添加或更新数据
+        /// </summary>
+        /// <param name="tableName">表名</param>
+        /// <param name="ht">键值表</param>
+        /// <param name="filterStr">过滤条件以and开头</param>
+        /// <returns>是否更新成功</returns>
+        public bool UpdateOrAdd(string tableName, Hashtable ht, string filterStr)
+        {
+            if (GetFirstColumnString(string.Format("select count(1) from {0} where 1=1 {1}", tableName, filterStr)) == "0")
+            {
+                return AddData(tableName, ht);
+            }
+            else
+            {
+                return UpdateData(tableName, ht, filterStr);
+            }
+        }
+
+        /// <summary>根据键值表ht中的数据向表中添加或更新数据
+        /// </summary>
+        /// <param name="tableName">表名</param>
+        /// <param name="ht">键值表</param>
+        /// <param name="filterStr">过滤条件以and开头</param>
+        /// <param name="paraArr">过滤条件中的参数数组</param>
+        /// <returns>是否更新成功</returns>
+        public bool UpdateOrAdd(string tableName, Hashtable ht, string filterStr, IDbDataParameter[] paraArr)
+        {
+            if (GetFirstColumnString(string.Format("select count(1) from {0} where 1=1 {1}", tableName, filterStr), paraArr) == "0")
+            {
+                return AddData(tableName, ht);
+            }
+            else
+            {
+                return UpdateData(tableName, ht, filterStr, paraArr);
+            }
+        }
+
+        /// <summary>向表中添加或更新数据并根据ht里面的键值对作为关键字更新(关键字默认不参与更新)
+        /// </summary>
+        /// <param name="tableName">表名</param>
+        /// <param name="ht">键值表</param>
+        /// <param name="keys">关键字集合</param>
+        /// <param name="isKeyAttend">关键字是否参与到更新中</param>
+        /// <returns>是否更新成功</returns>
+        public bool UpdateOrAdd(string tableName, Hashtable ht, List<string> keys, bool isKeyAttend = false)
+        {
+            List<IDbDataParameter> paraList = new List<IDbDataParameter>();
+            string filter = "";
+            keys.ForEach((i) =>
+            {
+                paraList.Add(CreatePara(i, ht[i]));
+                filter += string.Format(" and {0}=" + paraPrefix + i, i);
+            });
+            if (GetFirstColumnString(string.Format("select count(1) from {0} where 1=1 {1}", tableName, filter), paraList.ToArray()) == "0")
+            {
+                return AddData(tableName, ht);
+            }
+            else
+            {
+                return UpdateData(tableName, ht, keys, isKeyAttend);
+            }
+        }
+
+        /// <summary>判断参数集合list中是否包含同名的参数para,如果已存在返回true,否则返回false
         /// </summary>
         /// <param name="list">参数集合</param>
         /// <param name="para">参数模型</param>
@@ -432,11 +570,9 @@ namespace DBUtil
             }
             return false;
         }
-        #endregion
 
-        #region 删除一行 public int DeleteTableRow(string tableName, string strFilter)
-        /// <summary>
-        /// 删除一行
+
+        /// <summary>删除一行
         /// </summary>
         /// <param name="tableName">表名</param>
         /// <param name="strFilter">过滤条件以and开头</param>
@@ -446,11 +582,10 @@ namespace DBUtil
             string sql = string.Format("delete from {0} where 1=1 {1}", tableName, strFilter);
             return ExecuteSql(sql);
         }
-        #endregion
 
-        #region 删除一行 public int DeleteTableRow(string tableName, string strFilter, IDbDataParameter[] paras)
-        /// <summary>
-        /// 删除一行
+
+
+        /// <summary>删除一行
         /// </summary>
         /// <param name="tableName">表名</param>
         /// <param name="strFilter">过滤条件</param>
@@ -461,11 +596,9 @@ namespace DBUtil
             string sql = string.Format("delete from {0} where 1=1 {1}", tableName, strFilter);
             return ExecuteSql(sql, paras.ToArray());
         }
-        #endregion
 
-        #region 返回查到的第一行第一列的值 public object GetFirstColumn(string strSql)
-        /// <summary>
-        /// 返回查到的第一行第一列的值
+
+        /// <summary>返回查到的第一行第一列的值
         /// </summary>
         /// <param name="strSql">sql语句</param>
         /// <returns>返回查到的第一行第一列的值</returns>
@@ -490,11 +623,10 @@ namespace DBUtil
             }
             return obj;
         }
-        #endregion
 
-        #region 返回查到的第一行第一列的值 public object GetFirstColumn(string strSql, IDbDataParameter[] paraArr)
-        /// <summary>
-        /// 返回查到的第一行第一列的值
+
+
+        /// <summary>返回查到的第一行第一列的值
         /// </summary>
         /// <param name="strSql">sql语句</param>
         /// <param name="paraArr">sql语句参数</param>
@@ -520,11 +652,10 @@ namespace DBUtil
             }
             return obj;
         }
-        #endregion
 
-        #region 返回查到的第一行第一列的字符串值(调用GetFirstColumn,将返回的对象转换成字符串,如果为null就转化为"") public string GetFirstColumnString(string strSql, bool isReturnNull = false)
-        /// <summary>
-        /// 返回查到的第一行第一列的字符串值(调用GetFirstColumn,将返回的对象转换成字符串,如果为null就转化为"")
+
+
+        /// <summary>返回查到的第一行第一列的字符串值(调用GetFirstColumn,将返回的对象转换成字符串,如果为null就转化为"")
         /// </summary>
         /// <param name="strSql">sql语句</param>
         /// <param name="isReturnNull">当查询结果为null是是否将null返回,为true则返回null,为false则返回"",默认为false</param>
@@ -549,11 +680,10 @@ namespace DBUtil
                 return obj.ToString();
             }
         }
-        #endregion
 
-        #region 返回查到的第一行第一列的字符串值 public string GetFirstColumnString(string strSql, IDbDataParameter[] paraArr, bool isReturnNull = false)
-        /// <summary>
-        /// 返回查到的第一行第一列的字符串值
+
+
+        /// <summary>返回查到的第一行第一列的字符串值
         /// </summary>
         /// <param name="strSql">sql语句</param>
         /// <param name="paraArr">sql语句中的参数数组</param>
@@ -578,11 +708,9 @@ namespace DBUtil
                 return obj.ToString();
             }
         }
-        #endregion
 
-        #region 获取阅读器 public IDataReader GetDataReader(string strSql)
-        /// <summary>
-        /// 获取阅读器
+
+        /// <summary>获取阅读器
         /// </summary>
         /// <param name="strSql">sql语句</param>
         /// <returns>返回阅读器</returns>
@@ -600,11 +728,10 @@ namespace DBUtil
             }
             return cmd.ExecuteReader();
         }
-        #endregion
 
-        #region 获取阅读器 public IDataReader GetDataReader(string strSql, IDbDataParameter[] paraArr)
-        /// <summary>
-        /// 获取阅读器
+
+
+        /// <summary>获取阅读器
         /// </summary>
         /// <param name="strSql">sql语句</param>
         /// <returns>返回阅读器</returns>
@@ -623,11 +750,10 @@ namespace DBUtil
             }
             return cmd.ExecuteReader();
         }
-        #endregion
 
-        #region 返回查询结果的数据集 public DataSet GetDataSet(string strSql)
-        /// <summary>
-        /// 返回查询结果的数据集
+
+
+        /// <summary>返回查询结果的数据集
         /// </summary>
         /// <param name="strSql">sql语句</param>
         /// <returns>返回的查询结果集</returns>
@@ -653,11 +779,10 @@ namespace DBUtil
             }
             return set;
         }
-        #endregion
 
-        #region 返回查询结果的数据集 public DataSet GetDataSet(string strSql, IDbDataParameter[] paraArr)
-        /// <summary>
-        /// 返回查询结果的数据集
+
+
+        /// <summary>返回查询结果的数据集
         /// </summary>
         /// <param name="strSql">sql语句</param>
         /// <param name="paraArr">SQL语句中的参数集合</param>
@@ -685,11 +810,10 @@ namespace DBUtil
             }
             return set;
         }
-        #endregion
 
-        #region 返回查询结果的数据表 public DataTable GetDataSet(string strSql)
-        /// <summary>
-        /// 返回查询结果的数据表
+
+
+        /// <summary>返回查询结果的数据表
         /// </summary>
         /// <param name="strSql">sql语句</param>
         /// <returns>返回的查询数据表</returns>
@@ -704,11 +828,10 @@ namespace DBUtil
             }
             return null;
         }
-        #endregion
 
-        #region 返回查询结果的数据集 public DataTable GetDataTable(string strSql, IDbDataParameter[] paraArr)
-        /// <summary>
-        /// 返回的查询数据表
+
+
+        /// <summary>返回的查询数据表
         /// </summary>
         /// <param name="strSql">sql语句</param>
         /// <param name="paraArr">SQL语句中的参数集合</param>
@@ -724,11 +847,10 @@ namespace DBUtil
             }
             return null;
         }
-        #endregion
 
-        #region 开启事务 public void BeginTrans()
-        /// <summary>
-        /// 开启事务
+
+
+        /// <summary>开启事务
         /// </summary>
         public void BeginTrans()
         {
@@ -744,31 +866,26 @@ namespace DBUtil
             tran = conn.BeginTransaction();
             IsTran = true;
         }
-        #endregion
 
-        #region 提交事务 public void Commit()
-        /// <summary>
-        /// 提交事务
+
+        /// <summary>提交事务
         /// </summary>
         public void Commit()
         {
             tran.Commit();
         }
-        #endregion
 
-        #region 回滚事务 public void Rollback()
-        /// <summary>
-        /// 回滚事务
+
+
+        /// <summary>回滚事务
         /// </summary>
         public void Rollback()
         {
             tran.Rollback();
         }
-        #endregion
 
-        #region 判断指定表中是否有某一列 public bool JudgeColumnExist(string tableName, string columnName)
-        /// <summary>
-        /// 判断指定表中是否有某一列
+
+        /// <summary>判断指定表中是否有某一列
         /// </summary>
         /// <param name="tableName">表名</param>
         /// <param name="columnName">列名</param>
@@ -786,11 +903,10 @@ namespace DBUtil
                 return false;
             }
         }
-        #endregion
 
-        #region 判断表是否存在 public bool JudgeTableOrViewExist(string tableName)
-        /// <summary>
-        /// 判断表是否存在
+
+
+        /// <summary>判断表是否存在
         /// </summary>
         /// <param name="tableName">表名</param>
         /// <returns>返回表是否存在</returns>
@@ -807,11 +923,10 @@ namespace DBUtil
                 return false;
             }
         }
-        #endregion
 
-        #region 获得分页的查询语句 public string GetSqlForPageSize(string tableName, string[] selectColumns, int PageSize, int PageIndex, string strWhere, string strOrder)
-        /// <summary>
-        /// 获得分页的查询语句
+
+
+        /// <summary>获得分页的查询语句
         /// </summary>
         /// <param name="tableName">表名</param>
         /// <param name="selectColumns">要查询的列,为null是表示所有列</param>
@@ -824,10 +939,9 @@ namespace DBUtil
         {
             throw new NotImplementedException("不建议使用这个分页,请选择其他的分页!");
         }
-        #endregion
-        #region 获得分页的查询语句 public string GetSqlForPageSize(string selectSql, string strOrder, int PageSize, int PageIndex)
-        /// <summary>
-        /// 获得分页的查询语句
+
+
+        /// <summary>获得分页的查询语句
         /// </summary>
         /// <param name="selectSql">查询sql如:select name,id from test where id>5</param>
         /// <param name="strOrder">排序字句如:order by id desc</param>
@@ -839,11 +953,9 @@ namespace DBUtil
             string sql = string.Format(@"select * from (select inner__.*,ROWNUM RNO__ from({0} {1}) inner__) outer__ where outer__.RNO__ between {2} and {3} ", selectSql, strOrder, (PageIndex - 1) * PageSize + 1, PageSize * PageIndex);
             return sql;
         }
-        #endregion
 
-        #region 实现释放资源的方法 public void Dispose()
-        /// <summary>
-        /// 实现释放资源的方法
+
+        /// <summary>实现释放资源的方法
         /// </summary>
         public void Dispose()
         {
@@ -859,11 +971,10 @@ namespace DBUtil
             {
             }
         }
-        #endregion
 
-        #region  获得所有表,注意返回的集合中的表模型中只有表名 public List<DataTable> ShowTables()
-        /// <summary>
-        /// 获得所有表,注意返回的集合中的表模型中只有表名
+
+
+        /// <summary>获得所有表,注意返回的集合中的表模型中只有表名
         /// </summary>
         /// <returns></returns>
         public List<TableStruct> ShowTables()
@@ -879,7 +990,7 @@ namespace DBUtil
             }
             return list;
         }
-        #endregion
+
 
         public List<DataView> ShowViews()
         {
