@@ -6,11 +6,11 @@ using System.Runtime.InteropServices;
 // 特性集控制。更改这些特性值可修改
 // 与程序集关联的信息。
 [assembly: AssemblyTitle("DBUtil")]
-[assembly: AssemblyDescription("通用数据库操作工具-胡庆杰")]
+[assembly: AssemblyDescription("操作数据库通用组件-胡庆杰")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("JACKOA")]
+[assembly: AssemblyCompany("JackOA")]
 [assembly: AssemblyProduct("DBUtil")]
-[assembly: AssemblyCopyright("Copyright © JACKOA 2016")]
+[assembly: AssemblyCopyright("Copyright © JackOA 2016")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 

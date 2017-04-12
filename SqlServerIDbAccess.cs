@@ -920,6 +920,11 @@ namespace DBUtil
         /// <returns></returns>
         public TableStruct GetTableStruct(string tableName)
         {
+            string wrapTableName = "";
+            if (!string.IsNullOrWhiteSpace(tableName) || !tableName.StartsWith("["))
+            {
+                wrapTableName = "[" + tableName + "]";
+            }
             string sql = string.Format(@"
 select 
 	序号=ROW_NUMBER() OVER(order BY ORDINAL_POSITION),
@@ -1033,7 +1038,7 @@ WHERE  ds.minor_id=0 and
 from INFORMATION_SCHEMA.TABLES t where t.TABLE_TYPE='BASE TABLE' and t.TABLE_NAME='" + tbl.Name + "'";
             tbl.Desc = GetFirstColumnString(sql);
             //构建表索引集合
-            sql = "sp_helpindex '" + tableName + "'";
+            sql = "sp_helpindex '" + wrapTableName + "'";
             dt = GetDataTable(sql);
             if (dt != null && dt.Rows.Count > 0)
             {
@@ -1052,7 +1057,7 @@ from INFORMATION_SCHEMA.TABLES t where t.TABLE_TYPE='BASE TABLE' and t.TABLE_NAM
             }
 
             //构建触发器集合
-            sql = @" sp_helptrigger " + tableName;
+            sql = @" sp_helptrigger " + wrapTableName;
             dt = GetDataTable(sql);
             if (dt != null && dt.Rows.Count > 0)
             {
@@ -1489,10 +1494,10 @@ FROM fn_listextendedproperty ('MS_Description', 'schema', 'dbo', 'table', '{0}',
         /// <returns></returns>
         public void CreateTable(TableStruct tableStruct)
         {
-            string sql = string.Format(@" create table {0} (
+            string sql = string.Format(@" create table [{0}] (
 ", tableStruct.Name);
             string sqlPri = @"
-ALTER TABLE {0} ADD CONSTRAINT PK_gene_{0}_{1} PRIMARY KEY({2})";
+ALTER TABLE [{0}] ADD CONSTRAINT PK_gene_{0}_{1} PRIMARY KEY({2})";
             string priname = "";
             string prikey = "";
             string sqldesc = "";
@@ -1530,7 +1535,7 @@ ALTER TABLE {0} ADD CONSTRAINT PK_gene_{0}_{1} PRIMARY KEY({2})";
                     prikey += "," + i.Name;
                 }
 
-                sql += string.Format(@" {0} {1} {2} {3} {4} {5},
+                sql += string.Format(@" [{0}] {1} {2} {3} {4} {5},
 ", i.Name, i.Type, nullSql, defSql, ideSql, uniSql);
                 if (i.Desc != "" && i.Desc != null)
                 {
@@ -1541,6 +1546,17 @@ EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'{0}' , @level0
             });
             priname = priname.Trim('_');
             prikey = prikey.Trim(',');
+            if (prikey.Contains(","))
+            {
+                string[] arr = prikey.Split(',');
+                prikey = "";
+                for (int i = 0; i < arr.Length; i++)
+                {
+                    prikey += "[" + arr[i] + "],";
+                }
+                prikey = prikey.Trim(',');
+
+            }
             sqlPri = string.Format(sqlPri, tableStruct.Name, priname, prikey);
             if (prikey == "")
             {
@@ -1650,10 +1666,10 @@ SELECT idx.name
         /// <returns></returns>
         public string CreateTableSql(TableStruct tableStruct)
         {
-            string sql = string.Format(@"create table {0} (
+            string sql = string.Format(@"create table [{0}] (
 ", tableStruct.Name);
             string sqlPri = @"
-ALTER TABLE {0} ADD CONSTRAINT PK_gene_{0}_{1} PRIMARY KEY({2})";
+ALTER TABLE [{0}] ADD CONSTRAINT PK_gene_{0}_{1} PRIMARY KEY({2})";
             string priname = "";
             string prikey = "";
             string sqldesc = "";
@@ -1688,7 +1704,7 @@ ALTER TABLE {0} ADD CONSTRAINT PK_gene_{0}_{1} PRIMARY KEY({2})";
                     prikey += "," + i.Name;
                 }
 
-                sql += string.Format(@"    {0} {1} {2} {3} {4} {5},
+                sql += string.Format(@"    [{0}] {1} {2} {3} {4} {5},
 ", i.Name, i.FinalType, nullSql, defSql, ideSql, uniSql);
                 if (i.Desc != "" && i.Desc != null)
                 {
@@ -1700,6 +1716,17 @@ EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'{0}' , @level0
             sql = sql.Trim('\n', '\r', ',');
             priname = priname.Trim('_');
             prikey = prikey.Trim(',');
+            if (prikey.Contains(","))
+            {
+                string[] arr = prikey.Split(',');
+                prikey = "";
+                for (int i = 0; i < arr.Length; i++)
+                {
+                    prikey += "[" + arr[i] + "],";
+                }
+                prikey = prikey.Trim(',');
+
+            }
             sqlPri = string.Format(sqlPri, tableStruct.Name, priname, prikey);
             if (prikey == "")
             {
@@ -1768,6 +1795,10 @@ EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'{0}' , @level0
         /// <returns></returns>
         public string CreateViewSql(string viewName)
         {
+            if (!string.IsNullOrWhiteSpace(viewName) && viewName.StartsWith("["))
+            {
+                viewName = "[" + viewName + "]";
+            }
             StringBuilder sb = new StringBuilder();
 
             DataTable dt = GetDataTable("sp_helptext " + viewName);
