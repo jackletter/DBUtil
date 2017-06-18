@@ -11,6 +11,7 @@ namespace DBUtil
         SQLSERVER = 1,
         MYSQL = 2,
         SQLITE = 3,
-        ACCESS = 4
+        ACCESS = 4,
+        PostgreSql
     }
 }

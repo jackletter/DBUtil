@@ -27,6 +27,7 @@ namespace DBUtil
         /// <returns></returns>
         public static IDbAccess CreateIDB(string connStr, string DBType)
         {
+            DBType = (DBType ?? "").ToUpper();
             if (DBType == "SQLSERVER")
             {
                 SqlConnection conn = new SqlConnection(connStr);
@@ -64,6 +65,11 @@ namespace DBUtil
                 //使用单独一个方法,防止在下面代码访问不到的情况下仍会因没有sqlite组件而报错
                 return CreateSQLite(connStr);
             }
+            else if (DBType == "POSTGRESQL")
+            {
+                //使用单独一个方法,防止在下面代码访问不到的情况下仍会因没有postgresql组件而报错
+                return CreatePostgreSql(connStr);
+            }
             else
             {
                 throw new Exception("暂不支持这种(" + DBType + ")数据库!");
@@ -90,6 +96,18 @@ namespace DBUtil
                 conn = conn,
                 ConnectionString = connStr,
                 DataBaseType = DataBaseType.MYSQL
+            };
+            return iDb;
+        }
+
+        private static IDbAccess CreatePostgreSql(string connStr)
+        {
+            Npgsql.NpgsqlConnection conn = new Npgsql.NpgsqlConnection(connStr);
+            IDbAccess iDb = new PostgreSqlIDbAccess()
+            {
+                conn = conn,
+                ConnectionString = connStr,
+                DataBaseType = DataBaseType.PostgreSql
             };
             return iDb;
         }

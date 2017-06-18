@@ -6,7 +6,7 @@ using System.Data;
 
 namespace DBUtil
 {
-    internal class SimpleIDSNOManager : IDSNOManager
+    public class SimpleIDSNOManager : IDSNOManager
     {
         #region ID生成控制管理 根据表名和列名生成ID,第一次生成后就不需要再访问数据库
         private static System.Collections.Concurrent.ConcurrentDictionary<string, object> ht_locks = new System.Collections.Concurrent.ConcurrentDictionary<string, object>();
