@@ -19,7 +19,8 @@ namespace DBUtil
         /// <para>SQLSERVER:   Data Source=.;Initial Catalog=JACKOA;User ID=sa;Password=sa;</para>
         /// <para>ORACLE:   Data Source=ORCLmyvm2;Password=sys123;User ID=sys;DBA Privilege=SYSDBA;</para>
         /// <para>MYSQL:   Data Source=localhost;Initial Catalog=test;User ID=root;Password=hujie110;</para>
-        /// <para>ACCESS:   Provider=Microsoft.Jet.OLEDB.4.0;Data Source=G:\work\宁夏多规合一\Multiplan.mdb;</para>
+        /// <para>POSTGRESQL:   Server=localhost;Port=5432;UserId=postgres;Password=123456;Database=test</para>
+        /// <para>ACCESS:   Provider=Microsoft.Jet.OLEDB.4.0;Data Source=G:\work\Multiplan.mdb;</para>
         /// <para>ACCESS:   Provider=Microsoft.ACE.OLEDB.12.0;Data Source=C:\Users\Administrator\Desktop\demo.accdb;</para>
         /// <para>SQLITE:   Data Source=f:\demo.db;</para>
         /// </param>
