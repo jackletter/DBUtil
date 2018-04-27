@@ -24,7 +24,7 @@ namespace DBUtil
         /// <para>ACCESS:   Provider=Microsoft.ACE.OLEDB.12.0;Data Source=C:\Users\Administrator\Desktop\demo.accdb;</para>
         /// <para>SQLITE:   Data Source=f:\demo.db;</para>
         /// </param>
-        /// <param name="DBType">数据库类型:SQLSERVER、ORACLE、MYSQL、SQLITE、ACCESS</param>
+        /// <param name="DBType">数据库类型:SQLSERVER、ORACLE、MYSQL、SQLITE、ACCESS、POSTGRESQL</param>
         /// <returns></returns>
         public static IDbAccess CreateIDB(string connStr, string DBType)
         {
