@@ -4,11 +4,11 @@ using System.Collections;
 using System.Linq;
 using System.Text;
 using System.Data;
-using System.Data.OleDb;
+using System.Data.SQLite;
 
 namespace DBUtil
 {
-    public abstract class OleIDbBase : IDbAccess
+    public class SQLiteIDbAccess : IDbAccess
     {
         public IDSNOManager IDSNOManager { get { return IDBFactory.IDSNOManage; } }
         public bool IsKeepConnect { set; get; }
@@ -45,8 +45,7 @@ namespace DBUtil
 
         public bool IsTran { set; get; }
 
-        /// <summary>当前数据库使用的参数的前缀符号
-        /// </summary>
+        /// <summary>当前数据库使用的参数的前缀符号</summary>
         public string paraPrefix { get { return "@"; } }
 
 
@@ -55,9 +54,8 @@ namespace DBUtil
         /// <returns></returns>
         public IDbDataParameter CreatePara()
         {
-            return new OleDbParameter();
+            return new SQLiteParameter();
         }
-
 
 
         /// <summary>创建具有名称和值的参数
@@ -65,9 +63,8 @@ namespace DBUtil
         /// <returns>针对当前数据库类型的参数对象</returns>
         public IDbDataParameter CreatePara(string name, object value)
         {
-            return new OleDbParameter(name, value);
+            return new SQLiteParameter(name, value);
         }
-
 
         /// <summary>根据指定日期范围生成过滤字符串
         /// </summary>
@@ -116,10 +113,10 @@ namespace DBUtil
         {
             try
             {
-                OleDbCommand cmd = new OleDbCommand(strSql, (OleDbConnection)conn);
+                SQLiteCommand cmd = new SQLiteCommand(strSql, (SQLiteConnection)conn);
                 if (IsTran)
                 {
-                    cmd.Transaction = (OleDbTransaction)tran;
+                    cmd.Transaction = (SQLiteTransaction)tran;
                 }
                 if (!IsOpen)
                 {
@@ -157,11 +154,11 @@ namespace DBUtil
         {
             try
             {
-                OleDbCommand cmd = new OleDbCommand();
-                cmd.Connection = (OleDbConnection)conn;
+                SQLiteCommand cmd = new SQLiteCommand();
+                cmd.Connection = (SQLiteConnection)conn;
                 if (IsTran)
                 {
-                    cmd.Transaction = (OleDbTransaction)tran;
+                    cmd.Transaction = (SQLiteTransaction)tran;
                 }
                 if (!IsOpen)
                 {
@@ -192,6 +189,7 @@ namespace DBUtil
             }
         }
 
+
         /// <summary>执行带参数的sql语句
         /// </summary>
         /// <param name="strSql">要执行的sql语句</param>
@@ -201,10 +199,10 @@ namespace DBUtil
         {
             try
             {
-                OleDbCommand cmd = new OleDbCommand(strSql, (OleDbConnection)conn);
+                SQLiteCommand cmd = new SQLiteCommand(strSql, (SQLiteConnection)conn);
                 if (IsTran)
                 {
-                    cmd.Transaction = (OleDbTransaction)tran;
+                    cmd.Transaction = (SQLiteTransaction)tran;
                 }
                 cmd.Parameters.AddRange(paramArr);
                 if (!IsOpen)
@@ -262,7 +260,7 @@ namespace DBUtil
             {
                 insertTableOption += " " + item.Key.ToString() + ",";
                 insertTableValues += "@" + item.Key.ToString() + ",";
-                paras.Add(new OleDbParameter()
+                paras.Add(new SQLiteParameter()
                 {
                     ParameterName = item.Key.ToString(),
                     Value = item.Value
@@ -295,7 +293,7 @@ namespace DBUtil
                 else
                 {
                     sql += " " + item.Key.ToString() + "=@" + item.Key.ToString() + ",";
-                    paras.Add(new OleDbParameter()
+                    paras.Add(new SQLiteParameter()
                     {
                         ParameterName = item.Key.ToString(),
                         Value = item.Value
@@ -307,7 +305,6 @@ namespace DBUtil
             sql += filterStr;
             return ExecuteSql(sql, paras.ToArray()) > 0 ? true : false;
         }
-
 
         /// <summary>根据键值表ht中的数据向表中更新数据
         /// </summary>
@@ -329,7 +326,7 @@ namespace DBUtil
                 else
                 {
                     sql += " " + item.Key.ToString() + "=@" + item.Key.ToString() + ",";
-                    paras.Add(new OleDbParameter()
+                    paras.Add(new SQLiteParameter()
                     {
                         ParameterName = item.Key.ToString(),
                         Value = item.Value
@@ -374,15 +371,12 @@ namespace DBUtil
                 else
                 {
                     sql += " " + item.Key.ToString() + "=@" + item.Key.ToString() + ",";
-                    IDbDataParameter para = new OleDbParameter()
+                    IDbDataParameter para = new SQLiteParameter()
                     {
                         ParameterName = item.Key.ToString(),
                         Value = item.Value
                     };
-                    if (!ContainsDBParameter(paras, para))
-                    {
-                        paras.Add(para);
-                    }
+                    if (!ContainsDBParameter(paras, para)) paras.Add(para);
                 }
             }
             sql = sql.TrimEnd(new char[] { ',' });
@@ -390,7 +384,7 @@ namespace DBUtil
             foreach (var item in keys)
             {
                 sql += " and " + item + "=@" + item;
-                paras.Add(new OleDbParameter()
+                paras.Add(new SQLiteParameter()
                 {
                     ParameterName = item,
                     Value = ht[item]
@@ -461,6 +455,7 @@ namespace DBUtil
                 return UpdateData(tableName, ht, keys, isKeyAttend);
             }
         }
+
         /// <summary>判断参数集合list中是否包含同名的参数para,如果已存在返回true,否则返回false
         /// </summary>
         /// <param name="list">参数集合</param>
@@ -511,10 +506,10 @@ namespace DBUtil
         public object GetFirstColumn(string strSql)
         {
 
-            OleDbCommand cmd = new OleDbCommand(strSql, (OleDbConnection)conn);
+            SQLiteCommand cmd = new SQLiteCommand(strSql, (SQLiteConnection)conn);
             if (IsTran)
             {
-                cmd.Transaction = (OleDbTransaction)tran;
+                cmd.Transaction = (SQLiteTransaction)tran;
             }
             if (!IsOpen)
             {
@@ -538,11 +533,11 @@ namespace DBUtil
         /// <returns>返回查到的第一行第一列的值</returns>
         public object GetFirstColumn(string strSql, IDbDataParameter[] paraArr)
         {
-            OleDbCommand cmd = new OleDbCommand(strSql, (OleDbConnection)conn);
+            SQLiteCommand cmd = new SQLiteCommand(strSql, (SQLiteConnection)conn);
             cmd.Parameters.AddRange(paraArr);
             if (IsTran)
             {
-                cmd.Transaction = (OleDbTransaction)tran;
+                cmd.Transaction = (SQLiteTransaction)tran;
             }
             if (!IsOpen)
             {
@@ -619,10 +614,10 @@ namespace DBUtil
         /// <returns>返回阅读器</returns>
         public IDataReader GetDataReader(string strSql)
         {
-            OleDbCommand cmd = new OleDbCommand(strSql, (OleDbConnection)conn);
+            SQLiteCommand cmd = new SQLiteCommand(strSql, (SQLiteConnection)conn);
             if (IsTran)
             {
-                cmd.Transaction = (OleDbTransaction)tran;
+                cmd.Transaction = (SQLiteTransaction)tran;
             }
             if (!IsOpen)
             {
@@ -639,11 +634,11 @@ namespace DBUtil
         /// <returns>返回阅读器</returns>
         public IDataReader GetDataReader(string strSql, IDbDataParameter[] paraArr)
         {
-            OleDbCommand cmd = new OleDbCommand(strSql, (OleDbConnection)conn);
+            SQLiteCommand cmd = new SQLiteCommand(strSql, (SQLiteConnection)conn);
             cmd.Parameters.AddRange(paraArr);
             if (IsTran)
             {
-                cmd.Transaction = (OleDbTransaction)tran;
+                cmd.Transaction = (SQLiteTransaction)tran;
             }
             if (!IsOpen)
             {
@@ -660,17 +655,17 @@ namespace DBUtil
         /// <returns>返回的查询结果集</returns>
         public DataSet GetDataSet(string strSql)
         {
-            OleDbCommand cmd = new OleDbCommand(strSql, (OleDbConnection)conn);
+            SQLiteCommand cmd = new SQLiteCommand(strSql, (SQLiteConnection)conn);
             if (IsTran)
             {
-                cmd.Transaction = (OleDbTransaction)tran;
+                cmd.Transaction = (SQLiteTransaction)tran;
             }
             if (!IsOpen)
             {
                 conn.Open();
                 IsOpen = true;
             }
-            OleDbDataAdapter adp = new OleDbDataAdapter(cmd);
+            SQLiteDataAdapter adp = new SQLiteDataAdapter(cmd);
             DataSet set = new DataSet();
             adp.Fill(set);
             if (!IsTran && !IsKeepConnect)
@@ -689,18 +684,18 @@ namespace DBUtil
         /// <returns>返回的查询结果集</returns>
         public DataSet GetDataSet(string strSql, IDbDataParameter[] paraArr)
         {
-            OleDbCommand cmd = new OleDbCommand(strSql, (OleDbConnection)conn);
+            SQLiteCommand cmd = new SQLiteCommand(strSql, (SQLiteConnection)conn);
             cmd.Parameters.AddRange(paraArr);
             if (IsTran)
             {
-                cmd.Transaction = (OleDbTransaction)tran;
+                cmd.Transaction = (SQLiteTransaction)tran;
             }
             if (!IsOpen)
             {
                 conn.Open();
                 IsOpen = true;
             }
-            OleDbDataAdapter adp = new OleDbDataAdapter(cmd);
+            SQLiteDataAdapter adp = new SQLiteDataAdapter(cmd);
             DataSet set = new DataSet();
             adp.Fill(set);
             if (!IsTran && !IsKeepConnect)
@@ -788,9 +783,9 @@ namespace DBUtil
         /// <returns>返回列是否存在</returns>
         public bool JudgeColumnExist(string tableName, string columnName)
         {
-            string sql = string.Format("select count(1) from INFORMATION_SCHEMA.COLUMNS where TABLE_NAME='{0}' and COLUMN_NAME='{1}'", tableName, columnName);
-            int r = int.Parse(GetFirstColumn(sql).ToString());
-            if (r > 0)
+            string sql = string.Format("pragma table_info({0})", tableName);
+            DataTable dt = GetDataTable(sql);
+            if (dt != null && dt.Select(string.Format(" name='{0}'", columnName)).Length > 0)
             {
                 return true;
             }
@@ -807,7 +802,7 @@ namespace DBUtil
         /// <returns>返回表是否存在</returns>
         public bool JudgeTableOrViewExist(string tableName)
         {
-            string sql = string.Format("select count(1) from INFORMATION_SCHEMA.TABLES where TABLE_NAME='{0}'", tableName);
+            string sql = string.Format("select count(1) from sqlite_master where tbl_name='{0}'", tableName);
             int r = int.Parse(GetFirstColumn(sql).ToString());
             if (r > 0)
             {
@@ -829,11 +824,10 @@ namespace DBUtil
         /// <param name="strWhere">过滤条件</param>
         /// <param name="strOrder">排序条件</param>
         /// <returns>返回经过分页的语句</returns>
-        public virtual string GetSqlForPageSize(string tableName, string[] selectColumns, int PageSize, int PageIndex, string strWhere, string strOrder)
+        public string GetSqlForPageSize(string tableName, string[] selectColumns, int PageSize, int PageIndex, string strWhere, string strOrder)
         {
-            throw new NotImplementedException("不建议使用这个方法!");
+            throw new NotFiniteNumberException("不建议使用这种方法分页!");
         }
-
 
         /// <summary>获得分页的查询语句
         /// </summary>
@@ -842,9 +836,10 @@ namespace DBUtil
         /// <param name="PageSize">页面大小</param>
         /// <param name="PageIndex">页面索引从1开始</param>
         /// <returns>经过分页的sql语句</returns>
-        public virtual string GetSqlForPageSize(string selectSql, string strOrder, int PageSize, int PageIndex)
+        public string GetSqlForPageSize(string selectSql, string strOrder, int PageSize, int PageIndex)
         {
-            throw new NotImplementedException("由子类实现!");
+            string sql = string.Format("{0} {1} limit {2} offset {3}", selectSql, strOrder, PageSize, (PageIndex - 1) * PageSize);
+            return sql;
         }
 
 
@@ -865,13 +860,12 @@ namespace DBUtil
             }
         }
 
-
         /// <summary>获得所有表,注意返回的集合中的表模型中只有表名
         /// </summary>
         /// <returns></returns>
         public List<TableStruct> ShowTables()
         {
-            DataSet ds = GetDataSet("select TABLE_NAME from INFORMATION_SCHEMA.TABLES t where t.TABLE_TYPE ='BASE TABLE'");
+            DataSet ds = GetDataSet("select tbl_name from sqlite_master where type='table'");
             TableStruct tbl = null;
             List<TableStruct> list = new List<TableStruct>();
             for (int i = 0; i < ds.Tables[0].Rows.Count; i++)
@@ -886,6 +880,14 @@ namespace DBUtil
         public List<DataView> ShowViews()
         {
             throw new NotImplementedException();
+        }
+
+        /// <summary>根据当前的数据库类型和连接字符串创建一个新的数据库操作对象
+        /// </summary>
+        /// <returns></returns>
+        public IDbAccess CreateNewIDB()
+        {
+            return IDBFactory.CreateIDB(ConnectionString, DataBaseType);
         }
     }
 }

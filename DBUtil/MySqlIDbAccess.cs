@@ -4,11 +4,11 @@ using System.Collections;
 using System.Linq;
 using System.Text;
 using System.Data;
-using Oracle.DataAccess.Client;
+using MySql.Data.MySqlClient;
 
 namespace DBUtil
 {
-    public class OracleIDbAccess : IDbAccess
+    public class MySqlIDbAccess : IDbAccess
     {
         public IDSNOManager IDSNOManager { get { return IDBFactory.IDSNOManage; } }
         public bool IsKeepConnect { set; get; }
@@ -45,16 +45,16 @@ namespace DBUtil
 
         public bool IsTran { set; get; }
 
-        /// <summary>当前数据库使用的参数的前缀符号</summary>
-        public string paraPrefix { get { return ":"; } }
-
+        /// <summary>当前数据库使用的参数的前缀符号
+        /// </summary>
+        public string paraPrefix { get { return "@"; } }
 
         /// <summary>创建参数
         /// </summary>
         /// <returns></returns>
         public IDbDataParameter CreatePara()
         {
-            return new OracleParameter();
+            return new MySqlParameter();
         }
 
 
@@ -63,9 +63,8 @@ namespace DBUtil
         /// <returns>针对当前数据库类型的参数对象</returns>
         public IDbDataParameter CreatePara(string name, object value)
         {
-            return new OracleParameter(name, value);
+            return new MySqlParameter(name, value);
         }
-
 
         /// <summary>根据指定日期范围生成过滤字符串
         /// </summary>
@@ -83,19 +82,19 @@ namespace DBUtil
                 string res = "";
                 if (isMinInclude)
                 {
-                    res += " and " + dateColumn + ">=to_date('" + minDate + "','yyyy-MM-dd HH24:mi:ss')";
+                    res += " and " + dateColumn + ">='" + minDate + "'";
                 }
                 else
                 {
-                    res += " and " + dateColumn + ">to_date('" + minDate + "','yyyy-MM-dd HH24:mi:ss')";
+                    res += " and " + dateColumn + ">'" + minDate + "'";
                 }
                 if (isMaxInclude)
                 {
-                    res += " and " + dateColumn + "<=to_date('" + maxDate + "','yyyy-MM-dd HH24:mi:ss')";
+                    res += " and " + dateColumn + "<='" + maxDate + "'";
                 }
                 else
                 {
-                    res += " and " + dateColumn + "<to_date('" + maxDate + "','yyyy-MM-dd HH24:mi:ss')";
+                    res += " and " + dateColumn + "<'" + maxDate + "'";
                 }
                 return res;
             }
@@ -106,7 +105,6 @@ namespace DBUtil
         }
 
 
-
         /// <summary>执行sql语句
         /// </summary>
         /// <param name="strSql">要执行的sql语句</param>
@@ -115,10 +113,10 @@ namespace DBUtil
         {
             try
             {
-                OracleCommand cmd = new OracleCommand(strSql, (OracleConnection)conn);
+                MySqlCommand cmd = new MySqlCommand(strSql, (MySqlConnection)conn);
                 if (IsTran)
                 {
-                    cmd.Transaction = (OracleTransaction)tran;
+                    cmd.Transaction = (MySqlTransaction)tran;
                 }
                 if (!IsOpen)
                 {
@@ -148,8 +146,6 @@ namespace DBUtil
 
         }
 
-
-
         /// <summary>执行多个sql语句
         /// </summary>
         /// <param name="strSql">多个SQL语句的数组</param>
@@ -157,11 +153,11 @@ namespace DBUtil
         {
             try
             {
-                OracleCommand cmd = new OracleCommand();
-                cmd.Connection = (OracleConnection)conn;
+                MySqlCommand cmd = new MySqlCommand();
+                cmd.Connection = (MySqlConnection)conn;
                 if (IsTran)
                 {
-                    cmd.Transaction = (OracleTransaction)tran;
+                    cmd.Transaction = (MySqlTransaction)tran;
                 }
                 if (!IsOpen)
                 {
@@ -202,10 +198,10 @@ namespace DBUtil
         {
             try
             {
-                OracleCommand cmd = new OracleCommand(strSql, (OracleConnection)conn);
+                MySqlCommand cmd = new MySqlCommand(strSql, (MySqlConnection)conn);
                 if (IsTran)
                 {
-                    cmd.Transaction = (OracleTransaction)tran;
+                    cmd.Transaction = (MySqlTransaction)tran;
                 }
                 cmd.Parameters.AddRange(paramArr);
                 if (!IsOpen)
@@ -236,7 +232,6 @@ namespace DBUtil
         }
 
 
-
         /// <summary>批量执行带参数的sql语句
         /// </summary>
         /// <param name="strSql"></param>
@@ -258,33 +253,14 @@ namespace DBUtil
         /// <returns>返回是受影响的行数</returns>
         public bool AddData(string tableName, Hashtable ht)
         {
-            DataTable dt = GetDataTable(string.Format(" select DATA_TYPE,COLUMN_NAME from user_tab_cols where table_name='{0}'", tableName.ToUpper()));
-            Hashtable ht_pre = new Hashtable();
-            if (dt.Rows.Count > 0)
-            {
-                for (int i = 0; i < dt.Rows.Count; i++)
-                {
-                    if (dt.Rows[i]["DATA_TYPE"].ToString().ToUpper() == "DATE")
-                    {
-                        ht_pre.Add(dt.Rows[i]["COLUMN_NAME"].ToString(), dt.Rows[i]["DATA_TYPE"].ToString());
-                    }
-                }
-            }
             string insertTableOption = "";
             string insertTableValues = "";
             List<IDbDataParameter> paras = new List<IDbDataParameter>();
             foreach (System.Collections.DictionaryEntry item in ht)
             {
                 insertTableOption += " " + item.Key.ToString() + ",";
-                if (ht_pre.Contains(item.Key.ToString()))
-                {
-                    insertTableValues += "to_date(:" + item.Key.ToString() + ",'yyyy-MM-dd HH24:mi:ss'),";
-                }
-                else
-                {
-                    insertTableValues += ":" + item.Key.ToString() + ",";
-                }
-                paras.Add(new OracleParameter()
+                insertTableValues += "@" + item.Key.ToString() + ",";
+                paras.Add(new MySqlParameter()
                 {
                     ParameterName = item.Key.ToString(),
                     Value = item.Value
@@ -298,7 +274,6 @@ namespace DBUtil
         }
 
 
-
         /// <summary>根据键值表ht中的数据向表中更新数据
         /// </summary>
         /// <param name="tableName">表名</param>
@@ -307,19 +282,6 @@ namespace DBUtil
         /// <returns>是否更新成功</returns>
         public bool UpdateData(string tableName, Hashtable ht, string filterStr)
         {
-            DataTable dt = GetDataTable(string.Format(" select DATA_TYPE,COLUMN_NAME from user_tab_cols where table_name='{0}'", tableName.ToUpper()));
-            Hashtable ht_pre = new Hashtable();
-            if (dt.Rows.Count > 0)
-            {
-                for (int i = 0; i < dt.Rows.Count; i++)
-                {
-                    if (dt.Rows[i]["DATA_TYPE"].ToString().ToUpper() == "DATE")
-                    {
-                        ht_pre.Add(dt.Rows[i]["COLUMN_NAME"].ToString(), dt.Rows[i]["DATA_TYPE"].ToString());
-                    }
-                }
-            }
-
             string sql = string.Format("update {0} set ", tableName);
             List<IDbDataParameter> paras = new List<IDbDataParameter>();
             foreach (System.Collections.DictionaryEntry item in ht)
@@ -330,15 +292,8 @@ namespace DBUtil
                 }
                 else
                 {
-                    if (ht_pre.Contains(item.Key.ToString()))
-                    {
-                        sql += " " + item.Key.ToString() + "=to_date(:" + item.Key.ToString() + ",'yyyy-MM-dd HH24:mi:ss'),";
-                    }
-                    else
-                    {
-                        sql += " " + item.Key.ToString() + "=:" + item.Key.ToString() + ",";
-                    }
-                    paras.Add(new OracleParameter()
+                    sql += " " + item.Key.ToString() + "=@" + item.Key.ToString() + ",";
+                    paras.Add(new MySqlParameter()
                     {
                         ParameterName = item.Key.ToString(),
                         Value = item.Value
@@ -362,19 +317,6 @@ namespace DBUtil
         /// <returns>是否更新成功</returns>
         public bool UpdateData(string tableName, Hashtable ht, string filterStr, IDbDataParameter[] paraArr)
         {
-            DataTable dt = GetDataTable(string.Format(" select DATA_TYPE,COLUMN_NAME from user_tab_cols where table_name='{0}'", tableName.ToUpper()));
-            Hashtable ht_pre = new Hashtable();
-            if (dt.Rows.Count > 0)
-            {
-                for (int i = 0; i < dt.Rows.Count; i++)
-                {
-                    if (dt.Rows[i]["DATA_TYPE"].ToString().ToUpper() == "DATE")
-                    {
-                        ht_pre.Add(dt.Rows[i]["COLUMN_NAME"].ToString(), dt.Rows[i]["DATA_TYPE"].ToString());
-                    }
-                }
-            }
-
             string sql = string.Format("update {0} set ", tableName);
             List<IDbDataParameter> paras = new List<IDbDataParameter>();
             foreach (System.Collections.DictionaryEntry item in ht)
@@ -385,15 +327,8 @@ namespace DBUtil
                 }
                 else
                 {
-                    if (ht_pre.Contains(item.Key.ToString()))
-                    {
-                        sql += " " + item.Key.ToString() + "=to_date(:" + item.Key.ToString() + ",'yyyy-MM-dd HH24:mi:ss'),";
-                    }
-                    else
-                    {
-                        sql += " " + item.Key.ToString() + "=:" + item.Key.ToString() + ",";
-                    }
-                    paras.Add(new OracleParameter()
+                    sql += " " + item.Key.ToString() + "=@" + item.Key.ToString() + ",";
+                    paras.Add(new MySqlParameter()
                     {
                         ParameterName = item.Key.ToString(),
                         Value = item.Value
@@ -414,7 +349,6 @@ namespace DBUtil
         }
 
 
-
         /// <summary>向表中更新数据并根据ht里面的键值对作为关键字更新(关键字默认不参与更新)
         /// </summary>
         /// <param name="tableName">表名</param>
@@ -424,19 +358,6 @@ namespace DBUtil
         /// <returns>是否更新成功</returns>
         public bool UpdateData(string tableName, Hashtable ht, List<string> keys, bool isKeyAttend = false)
         {
-            DataTable dt = GetDataTable(string.Format(" select DATA_TYPE,COLUMN_NAME from user_tab_cols where table_name='{0}'", tableName.ToUpper()));
-            Hashtable ht_pre = new Hashtable();
-            if (dt.Rows.Count > 0)
-            {
-                for (int i = 0; i < dt.Rows.Count; i++)
-                {
-                    if (dt.Rows[i]["DATA_TYPE"].ToString().ToUpper() == "DATE")
-                    {
-                        ht_pre.Add(dt.Rows[i]["COLUMN_NAME"].ToString(), dt.Rows[i]["DATA_TYPE"].ToString());
-                    }
-                }
-            }
-
             string sql = string.Format("update {0} set ", tableName);
             List<IDbDataParameter> paras = new List<IDbDataParameter>();
             foreach (System.Collections.DictionaryEntry item in ht)
@@ -451,15 +372,8 @@ namespace DBUtil
                 }
                 else
                 {
-                    if (ht_pre.Contains(item.Key.ToString()))
-                    {
-                        sql += " " + item.Key.ToString() + "=to_date(:" + item.Key.ToString() + ",'yyyy-MM-dd HH24:mi:ss'),";
-                    }
-                    else
-                    {
-                        sql += " " + item.Key.ToString() + "=:" + item.Key.ToString() + ",";
-                    }
-                    IDbDataParameter para = new OracleParameter()
+                    sql += " " + item.Key.ToString() + "=@" + item.Key.ToString() + ",";
+                    IDbDataParameter para = new MySqlParameter()
                     {
                         ParameterName = item.Key.ToString(),
                         Value = item.Value
@@ -474,15 +388,8 @@ namespace DBUtil
             sql += " where 1=1 ";
             foreach (var item in keys)
             {
-                if (ht_pre.Contains(item.ToUpper().ToString()))
-                {
-                    sql += " and " + item + "=to_date(:" + item + ",'yyyy-MM-dd HH24:mi:ss')";
-                }
-                else
-                {
-                    sql += " and " + item + "=:" + item;
-                }
-                paras.Add(new OracleParameter()
+                sql += " and " + item + "=@" + item;
+                paras.Add(new MySqlParameter()
                 {
                     ParameterName = item,
                     Value = ht[item]
@@ -584,7 +491,6 @@ namespace DBUtil
         }
 
 
-
         /// <summary>删除一行
         /// </summary>
         /// <param name="tableName">表名</param>
@@ -605,10 +511,10 @@ namespace DBUtil
         public object GetFirstColumn(string strSql)
         {
 
-            OracleCommand cmd = new OracleCommand(strSql, (OracleConnection)conn);
+            MySqlCommand cmd = new MySqlCommand(strSql, (MySqlConnection)conn);
             if (IsTran)
             {
-                cmd.Transaction = (OracleTransaction)tran;
+                cmd.Transaction = (MySqlTransaction)tran;
             }
             if (!IsOpen)
             {
@@ -623,7 +529,6 @@ namespace DBUtil
             }
             return obj;
         }
-
 
 
         /// <summary>返回查到的第一行第一列的值
@@ -633,11 +538,11 @@ namespace DBUtil
         /// <returns>返回查到的第一行第一列的值</returns>
         public object GetFirstColumn(string strSql, IDbDataParameter[] paraArr)
         {
-            OracleCommand cmd = new OracleCommand(strSql, (OracleConnection)conn);
+            MySqlCommand cmd = new MySqlCommand(strSql, (MySqlConnection)conn);
             cmd.Parameters.AddRange(paraArr);
             if (IsTran)
             {
-                cmd.Transaction = (OracleTransaction)tran;
+                cmd.Transaction = (MySqlTransaction)tran;
             }
             if (!IsOpen)
             {
@@ -652,7 +557,6 @@ namespace DBUtil
             }
             return obj;
         }
-
 
 
         /// <summary>返回查到的第一行第一列的字符串值(调用GetFirstColumn,将返回的对象转换成字符串,如果为null就转化为"")
@@ -716,10 +620,10 @@ namespace DBUtil
         /// <returns>返回阅读器</returns>
         public IDataReader GetDataReader(string strSql)
         {
-            OracleCommand cmd = new OracleCommand(strSql, (OracleConnection)conn);
+            MySqlCommand cmd = new MySqlCommand(strSql, (MySqlConnection)conn);
             if (IsTran)
             {
-                cmd.Transaction = (OracleTransaction)tran;
+                cmd.Transaction = (MySqlTransaction)tran;
             }
             if (!IsOpen)
             {
@@ -730,18 +634,17 @@ namespace DBUtil
         }
 
 
-
         /// <summary>获取阅读器
         /// </summary>
         /// <param name="strSql">sql语句</param>
         /// <returns>返回阅读器</returns>
         public IDataReader GetDataReader(string strSql, IDbDataParameter[] paraArr)
         {
-            OracleCommand cmd = new OracleCommand(strSql, (OracleConnection)conn);
+            MySqlCommand cmd = new MySqlCommand(strSql, (MySqlConnection)conn);
             cmd.Parameters.AddRange(paraArr);
             if (IsTran)
             {
-                cmd.Transaction = (OracleTransaction)tran;
+                cmd.Transaction = (MySqlTransaction)tran;
             }
             if (!IsOpen)
             {
@@ -759,17 +662,17 @@ namespace DBUtil
         /// <returns>返回的查询结果集</returns>
         public DataSet GetDataSet(string strSql)
         {
-            OracleCommand cmd = new OracleCommand(strSql, (OracleConnection)conn);
+            MySqlCommand cmd = new MySqlCommand(strSql, (MySqlConnection)conn);
             if (IsTran)
             {
-                cmd.Transaction = (OracleTransaction)tran;
+                cmd.Transaction = (MySqlTransaction)tran;
             }
             if (!IsOpen)
             {
                 conn.Open();
                 IsOpen = true;
             }
-            OracleDataAdapter adp = new OracleDataAdapter(cmd);
+            MySqlDataAdapter adp = new MySqlDataAdapter(cmd);
             DataSet set = new DataSet();
             adp.Fill(set);
             if (!IsTran && !IsKeepConnect)
@@ -779,7 +682,6 @@ namespace DBUtil
             }
             return set;
         }
-
 
 
         /// <summary>返回查询结果的数据集
@@ -789,18 +691,18 @@ namespace DBUtil
         /// <returns>返回的查询结果集</returns>
         public DataSet GetDataSet(string strSql, IDbDataParameter[] paraArr)
         {
-            OracleCommand cmd = new OracleCommand(strSql, (OracleConnection)conn);
+            MySqlCommand cmd = new MySqlCommand(strSql, (MySqlConnection)conn);
             cmd.Parameters.AddRange(paraArr);
             if (IsTran)
             {
-                cmd.Transaction = (OracleTransaction)tran;
+                cmd.Transaction = (MySqlTransaction)tran;
             }
             if (!IsOpen)
             {
                 conn.Open();
                 IsOpen = true;
             }
-            OracleDataAdapter adp = new OracleDataAdapter(cmd);
+            MySqlDataAdapter adp = new MySqlDataAdapter(cmd);
             DataSet set = new DataSet();
             adp.Fill(set);
             if (!IsTran && !IsKeepConnect)
@@ -810,7 +712,6 @@ namespace DBUtil
             }
             return set;
         }
-
 
 
         /// <summary>返回查询结果的数据表
@@ -830,7 +731,6 @@ namespace DBUtil
         }
 
 
-
         /// <summary>返回的查询数据表
         /// </summary>
         /// <param name="strSql">sql语句</param>
@@ -847,7 +747,6 @@ namespace DBUtil
             }
             return null;
         }
-
 
 
         /// <summary>开启事务
@@ -876,7 +775,6 @@ namespace DBUtil
         }
 
 
-
         /// <summary>回滚事务
         /// </summary>
         public void Rollback()
@@ -892,7 +790,7 @@ namespace DBUtil
         /// <returns>返回列是否存在</returns>
         public bool JudgeColumnExist(string tableName, string columnName)
         {
-            string sql = string.Format("select count(1) from user_tab_cols t where t.table_name='{0}' and t.column_name='{1}'", tableName, columnName);
+            string sql = string.Format("select count(1) from INFORMATION_SCHEMA.COLUMNS where TABLE_NAME='{0}' and COLUMN_NAME='{1}'", tableName, columnName);
             int r = int.Parse(GetFirstColumn(sql).ToString());
             if (r > 0)
             {
@@ -903,8 +801,6 @@ namespace DBUtil
                 return false;
             }
         }
-
-
 
         /// <summary>判断表是否存在
         /// </summary>
@@ -912,7 +808,7 @@ namespace DBUtil
         /// <returns>返回表是否存在</returns>
         public bool JudgeTableOrViewExist(string tableName)
         {
-            string sql = string.Format("select count(1) from user_tables t where t.TABLE_NAME ='{0}'", tableName);
+            string sql = string.Format("select count(1) from INFORMATION_SCHEMA.TABLES where TABLE_NAME='{0}'", tableName);
             int r = int.Parse(GetFirstColumn(sql).ToString());
             if (r > 0)
             {
@@ -923,7 +819,6 @@ namespace DBUtil
                 return false;
             }
         }
-
 
 
         /// <summary>获得分页的查询语句
@@ -937,7 +832,7 @@ namespace DBUtil
         /// <returns>返回经过分页的语句</returns>
         public string GetSqlForPageSize(string tableName, string[] selectColumns, int PageSize, int PageIndex, string strWhere, string strOrder)
         {
-            throw new NotImplementedException("不建议使用这个分页,请选择其他的分页!");
+            throw new NotFiniteNumberException("不建议使用这种方法分页!");
         }
 
 
@@ -950,7 +845,7 @@ namespace DBUtil
         /// <returns>经过分页的sql语句</returns>
         public string GetSqlForPageSize(string selectSql, string strOrder, int PageSize, int PageIndex)
         {
-            string sql = string.Format(@"select * from (select inner__.*,ROWNUM RNO__ from({0} {1}) inner__) outer__ where outer__.RNO__ between {2} and {3} ", selectSql, strOrder, (PageIndex - 1) * PageSize + 1, PageSize * PageIndex);
+            string sql = string.Format("{0} {1} limit {2},{3}", selectSql, strOrder, (PageIndex - 1) * PageSize, PageSize);
             return sql;
         }
 
@@ -973,13 +868,12 @@ namespace DBUtil
         }
 
 
-
         /// <summary>获得所有表,注意返回的集合中的表模型中只有表名
         /// </summary>
         /// <returns></returns>
         public List<TableStruct> ShowTables()
         {
-            DataSet ds = GetDataSet("select TABLE_NAME from user_tables");
+            DataSet ds = GetDataSet("select TABLE_NAME from INFORMATION_SCHEMA.TABLES t where t.TABLE_TYPE ='BASE TABLE'");
             TableStruct tbl = null;
             List<TableStruct> list = new List<TableStruct>();
             for (int i = 0; i < ds.Tables[0].Rows.Count; i++)
@@ -991,10 +885,17 @@ namespace DBUtil
             return list;
         }
 
-
         public List<DataView> ShowViews()
         {
             throw new NotImplementedException();
+        }
+
+        /// <summary>根据当前的数据库类型和连接字符串创建一个新的数据库操作对象
+        /// </summary>
+        /// <returns></returns>
+        public IDbAccess CreateNewIDB()
+        {
+            return IDBFactory.CreateIDB(ConnectionString, DataBaseType);
         }
     }
 }

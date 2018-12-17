@@ -4,11 +4,11 @@ using System.Collections;
 using System.Linq;
 using System.Text;
 using System.Data;
-using MySql.Data.MySqlClient;
+using System.Data.OleDb;
 
 namespace DBUtil
 {
-    public class MySqlIDbAccess : IDbAccess
+    public abstract class OleIDbBase : IDbAccess
     {
         public IDSNOManager IDSNOManager { get { return IDBFactory.IDSNOManage; } }
         public bool IsKeepConnect { set; get; }
@@ -49,13 +49,15 @@ namespace DBUtil
         /// </summary>
         public string paraPrefix { get { return "@"; } }
 
+
         /// <summary>创建参数
         /// </summary>
         /// <returns></returns>
         public IDbDataParameter CreatePara()
         {
-            return new MySqlParameter();
+            return new OleDbParameter();
         }
+
 
 
         /// <summary>创建具有名称和值的参数
@@ -63,8 +65,9 @@ namespace DBUtil
         /// <returns>针对当前数据库类型的参数对象</returns>
         public IDbDataParameter CreatePara(string name, object value)
         {
-            return new MySqlParameter(name, value);
+            return new OleDbParameter(name, value);
         }
+
 
         /// <summary>根据指定日期范围生成过滤字符串
         /// </summary>
@@ -113,10 +116,10 @@ namespace DBUtil
         {
             try
             {
-                MySqlCommand cmd = new MySqlCommand(strSql, (MySqlConnection)conn);
+                OleDbCommand cmd = new OleDbCommand(strSql, (OleDbConnection)conn);
                 if (IsTran)
                 {
-                    cmd.Transaction = (MySqlTransaction)tran;
+                    cmd.Transaction = (OleDbTransaction)tran;
                 }
                 if (!IsOpen)
                 {
@@ -146,6 +149,7 @@ namespace DBUtil
 
         }
 
+
         /// <summary>执行多个sql语句
         /// </summary>
         /// <param name="strSql">多个SQL语句的数组</param>
@@ -153,11 +157,11 @@ namespace DBUtil
         {
             try
             {
-                MySqlCommand cmd = new MySqlCommand();
-                cmd.Connection = (MySqlConnection)conn;
+                OleDbCommand cmd = new OleDbCommand();
+                cmd.Connection = (OleDbConnection)conn;
                 if (IsTran)
                 {
-                    cmd.Transaction = (MySqlTransaction)tran;
+                    cmd.Transaction = (OleDbTransaction)tran;
                 }
                 if (!IsOpen)
                 {
@@ -188,7 +192,6 @@ namespace DBUtil
             }
         }
 
-
         /// <summary>执行带参数的sql语句
         /// </summary>
         /// <param name="strSql">要执行的sql语句</param>
@@ -198,10 +201,10 @@ namespace DBUtil
         {
             try
             {
-                MySqlCommand cmd = new MySqlCommand(strSql, (MySqlConnection)conn);
+                OleDbCommand cmd = new OleDbCommand(strSql, (OleDbConnection)conn);
                 if (IsTran)
                 {
-                    cmd.Transaction = (MySqlTransaction)tran;
+                    cmd.Transaction = (OleDbTransaction)tran;
                 }
                 cmd.Parameters.AddRange(paramArr);
                 if (!IsOpen)
@@ -245,7 +248,6 @@ namespace DBUtil
         }
 
 
-
         /// <summary>向一个表中添加一行数据
         /// </summary>
         /// <param name="tableName">表名</param>
@@ -260,7 +262,7 @@ namespace DBUtil
             {
                 insertTableOption += " " + item.Key.ToString() + ",";
                 insertTableValues += "@" + item.Key.ToString() + ",";
-                paras.Add(new MySqlParameter()
+                paras.Add(new OleDbParameter()
                 {
                     ParameterName = item.Key.ToString(),
                     Value = item.Value
@@ -293,7 +295,7 @@ namespace DBUtil
                 else
                 {
                     sql += " " + item.Key.ToString() + "=@" + item.Key.ToString() + ",";
-                    paras.Add(new MySqlParameter()
+                    paras.Add(new OleDbParameter()
                     {
                         ParameterName = item.Key.ToString(),
                         Value = item.Value
@@ -305,7 +307,6 @@ namespace DBUtil
             sql += filterStr;
             return ExecuteSql(sql, paras.ToArray()) > 0 ? true : false;
         }
-
 
 
         /// <summary>根据键值表ht中的数据向表中更新数据
@@ -328,7 +329,7 @@ namespace DBUtil
                 else
                 {
                     sql += " " + item.Key.ToString() + "=@" + item.Key.ToString() + ",";
-                    paras.Add(new MySqlParameter()
+                    paras.Add(new OleDbParameter()
                     {
                         ParameterName = item.Key.ToString(),
                         Value = item.Value
@@ -373,7 +374,7 @@ namespace DBUtil
                 else
                 {
                     sql += " " + item.Key.ToString() + "=@" + item.Key.ToString() + ",";
-                    IDbDataParameter para = new MySqlParameter()
+                    IDbDataParameter para = new OleDbParameter()
                     {
                         ParameterName = item.Key.ToString(),
                         Value = item.Value
@@ -389,7 +390,7 @@ namespace DBUtil
             foreach (var item in keys)
             {
                 sql += " and " + item + "=@" + item;
-                paras.Add(new MySqlParameter()
+                paras.Add(new OleDbParameter()
                 {
                     ParameterName = item,
                     Value = ht[item]
@@ -460,7 +461,6 @@ namespace DBUtil
                 return UpdateData(tableName, ht, keys, isKeyAttend);
             }
         }
-
         /// <summary>判断参数集合list中是否包含同名的参数para,如果已存在返回true,否则返回false
         /// </summary>
         /// <param name="list">参数集合</param>
@@ -511,10 +511,10 @@ namespace DBUtil
         public object GetFirstColumn(string strSql)
         {
 
-            MySqlCommand cmd = new MySqlCommand(strSql, (MySqlConnection)conn);
+            OleDbCommand cmd = new OleDbCommand(strSql, (OleDbConnection)conn);
             if (IsTran)
             {
-                cmd.Transaction = (MySqlTransaction)tran;
+                cmd.Transaction = (OleDbTransaction)tran;
             }
             if (!IsOpen)
             {
@@ -538,11 +538,11 @@ namespace DBUtil
         /// <returns>返回查到的第一行第一列的值</returns>
         public object GetFirstColumn(string strSql, IDbDataParameter[] paraArr)
         {
-            MySqlCommand cmd = new MySqlCommand(strSql, (MySqlConnection)conn);
+            OleDbCommand cmd = new OleDbCommand(strSql, (OleDbConnection)conn);
             cmd.Parameters.AddRange(paraArr);
             if (IsTran)
             {
-                cmd.Transaction = (MySqlTransaction)tran;
+                cmd.Transaction = (OleDbTransaction)tran;
             }
             if (!IsOpen)
             {
@@ -586,7 +586,6 @@ namespace DBUtil
         }
 
 
-
         /// <summary>返回查到的第一行第一列的字符串值
         /// </summary>
         /// <param name="strSql">sql语句</param>
@@ -620,10 +619,10 @@ namespace DBUtil
         /// <returns>返回阅读器</returns>
         public IDataReader GetDataReader(string strSql)
         {
-            MySqlCommand cmd = new MySqlCommand(strSql, (MySqlConnection)conn);
+            OleDbCommand cmd = new OleDbCommand(strSql, (OleDbConnection)conn);
             if (IsTran)
             {
-                cmd.Transaction = (MySqlTransaction)tran;
+                cmd.Transaction = (OleDbTransaction)tran;
             }
             if (!IsOpen)
             {
@@ -640,11 +639,11 @@ namespace DBUtil
         /// <returns>返回阅读器</returns>
         public IDataReader GetDataReader(string strSql, IDbDataParameter[] paraArr)
         {
-            MySqlCommand cmd = new MySqlCommand(strSql, (MySqlConnection)conn);
+            OleDbCommand cmd = new OleDbCommand(strSql, (OleDbConnection)conn);
             cmd.Parameters.AddRange(paraArr);
             if (IsTran)
             {
-                cmd.Transaction = (MySqlTransaction)tran;
+                cmd.Transaction = (OleDbTransaction)tran;
             }
             if (!IsOpen)
             {
@@ -655,24 +654,23 @@ namespace DBUtil
         }
 
 
-
         /// <summary>返回查询结果的数据集
         /// </summary>
         /// <param name="strSql">sql语句</param>
         /// <returns>返回的查询结果集</returns>
         public DataSet GetDataSet(string strSql)
         {
-            MySqlCommand cmd = new MySqlCommand(strSql, (MySqlConnection)conn);
+            OleDbCommand cmd = new OleDbCommand(strSql, (OleDbConnection)conn);
             if (IsTran)
             {
-                cmd.Transaction = (MySqlTransaction)tran;
+                cmd.Transaction = (OleDbTransaction)tran;
             }
             if (!IsOpen)
             {
                 conn.Open();
                 IsOpen = true;
             }
-            MySqlDataAdapter adp = new MySqlDataAdapter(cmd);
+            OleDbDataAdapter adp = new OleDbDataAdapter(cmd);
             DataSet set = new DataSet();
             adp.Fill(set);
             if (!IsTran && !IsKeepConnect)
@@ -691,18 +689,18 @@ namespace DBUtil
         /// <returns>返回的查询结果集</returns>
         public DataSet GetDataSet(string strSql, IDbDataParameter[] paraArr)
         {
-            MySqlCommand cmd = new MySqlCommand(strSql, (MySqlConnection)conn);
+            OleDbCommand cmd = new OleDbCommand(strSql, (OleDbConnection)conn);
             cmd.Parameters.AddRange(paraArr);
             if (IsTran)
             {
-                cmd.Transaction = (MySqlTransaction)tran;
+                cmd.Transaction = (OleDbTransaction)tran;
             }
             if (!IsOpen)
             {
                 conn.Open();
                 IsOpen = true;
             }
-            MySqlDataAdapter adp = new MySqlDataAdapter(cmd);
+            OleDbDataAdapter adp = new OleDbDataAdapter(cmd);
             DataSet set = new DataSet();
             adp.Fill(set);
             if (!IsTran && !IsKeepConnect)
@@ -802,6 +800,7 @@ namespace DBUtil
             }
         }
 
+
         /// <summary>判断表是否存在
         /// </summary>
         /// <param name="tableName">表名</param>
@@ -830,9 +829,9 @@ namespace DBUtil
         /// <param name="strWhere">过滤条件</param>
         /// <param name="strOrder">排序条件</param>
         /// <returns>返回经过分页的语句</returns>
-        public string GetSqlForPageSize(string tableName, string[] selectColumns, int PageSize, int PageIndex, string strWhere, string strOrder)
+        public virtual string GetSqlForPageSize(string tableName, string[] selectColumns, int PageSize, int PageIndex, string strWhere, string strOrder)
         {
-            throw new NotFiniteNumberException("不建议使用这种方法分页!");
+            throw new NotImplementedException("不建议使用这个方法!");
         }
 
 
@@ -843,10 +842,9 @@ namespace DBUtil
         /// <param name="PageSize">页面大小</param>
         /// <param name="PageIndex">页面索引从1开始</param>
         /// <returns>经过分页的sql语句</returns>
-        public string GetSqlForPageSize(string selectSql, string strOrder, int PageSize, int PageIndex)
+        public virtual string GetSqlForPageSize(string selectSql, string strOrder, int PageSize, int PageIndex)
         {
-            string sql = string.Format("{0} {1} limit {2},{3}", selectSql, strOrder, (PageIndex - 1) * PageSize, PageSize);
-            return sql;
+            throw new NotImplementedException("由子类实现!");
         }
 
 
@@ -888,6 +886,14 @@ namespace DBUtil
         public List<DataView> ShowViews()
         {
             throw new NotImplementedException();
+        }
+
+        /// <summary>根据当前的数据库类型和连接字符串创建一个新的数据库操作对象
+        /// </summary>
+        /// <returns></returns>
+        public IDbAccess CreateNewIDB()
+        {
+            return IDBFactory.CreateIDB(ConnectionString, DataBaseType);
         }
     }
 }

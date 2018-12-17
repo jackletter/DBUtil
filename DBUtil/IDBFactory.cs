@@ -16,10 +16,10 @@ namespace DBUtil
         /// </summary>
         /// <param name="connStr">
         /// <para>连接字符串:</para>
-        /// <para>SQLSERVER:   Data Source=.;Initial Catalog=JACKOA;User ID=sa;Password=sa;</para>
+        /// <para>SQLSERVER:   Data Source=.;Initial Catalog=JACKOA;User ID=sa;Password=xx;</para>
         /// <para>ORACLE:   Data Source=ORCLmyvm2;Password=sys123;User ID=sys;DBA Privilege=SYSDBA;</para>
-        /// <para>MYSQL:   Data Source=localhost;Initial Catalog=test;User ID=root;Password=hujie110;</para>
-        /// <para>POSTGRESQL:   Server=localhost;Port=5432;UserId=postgres;Password=123456;Database=test</para>
+        /// <para>MYSQL:   Data Source=localhost;Initial Catalog=test;User ID=root;Password=xxxx;</para>
+        /// <para>POSTGRESQL:   Server=localhost;Port=5432;UserId=postgres;Password=xxxx;Database=test</para>
         /// <para>ACCESS:   Provider=Microsoft.Jet.OLEDB.4.0;Data Source=G:\work\Multiplan.mdb;</para>
         /// <para>ACCESS:   Provider=Microsoft.ACE.OLEDB.12.0;Data Source=C:\Users\Administrator\Desktop\demo.accdb;</para>
         /// <para>SQLITE:   Data Source=f:\demo.db;</para>
@@ -76,6 +76,28 @@ namespace DBUtil
                 throw new Exception("暂不支持这种(" + DBType + ")数据库!");
             }
         }
+
+        /// <summary>
+        /// 创建IDB对象
+        /// </summary>
+        /// <param name="connStr">
+        /// <para>连接字符串:</para>
+        /// <para>SQLSERVER:   Data Source=.;Initial Catalog=JACKOA;User ID=sa;Password=xx;</para>
+        /// <para>ORACLE:   Data Source=ORCLmyvm2;Password=sys123;User ID=sys;DBA Privilege=SYSDBA;</para>
+        /// <para>MYSQL:   Data Source=localhost;Initial Catalog=test;User ID=root;Password=xxxx;</para>
+        /// <para>POSTGRESQL:   Server=localhost;Port=5432;UserId=postgres;Password=xxxx;Database=test</para>
+        /// <para>ACCESS:   Provider=Microsoft.Jet.OLEDB.4.0;Data Source=G:\work\Multiplan.mdb;</para>
+        /// <para>ACCESS:   Provider=Microsoft.ACE.OLEDB.12.0;Data Source=C:\Users\Administrator\Desktop\demo.accdb;</para>
+        /// <para>SQLITE:   Data Source=f:\demo.db;</para>
+        /// </param>
+        /// <param name="DBType">数据库类型:SQLSERVER、ORACLE、MYSQL、SQLITE、ACCESS、POSTGRESQL</param>
+        /// <returns></returns>
+        public static IDbAccess CreateIDB(string connStr, DataBaseType DBType)
+        {
+            string dbtype = DBType.ToString();
+            return CreateIDB(connStr, dbtype);
+        }
+
 
         private static IDbAccess CreateOracle(string connStr)
         {

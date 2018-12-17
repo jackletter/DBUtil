@@ -1,4 +1,4 @@
-﻿using Npgsql;
+﻿using System.Data.SqlClient;
 using System;
 using System.Collections.Generic;
 using System.Collections;
@@ -9,7 +9,7 @@ using System.Text.RegularExpressions;
 
 namespace DBUtil
 {
-    public class PostgreSqlIDbAccess : IDbAccess
+    public class SqlServerIDbAccess : IDbAccess
     {
         public IDSNOManager IDSNOManager { get { return IDBFactory.IDSNOManage; } }
         public bool IsKeepConnect { set; get; }
@@ -48,14 +48,14 @@ namespace DBUtil
 
         /// <summary>当前数据库使用的参数的前缀符号
         /// </summary>
-        public string paraPrefix { get { return ":"; } }
+        public string paraPrefix { get { return "@"; } }
 
         /// <summary>创建参数
         /// </summary>
         /// <returns></returns>
         public IDbDataParameter CreatePara()
         {
-            return new Npgsql.NpgsqlParameter();
+            return new SqlParameter();
         }
 
 
@@ -64,7 +64,7 @@ namespace DBUtil
         /// <returns>针对当前数据库类型的参数对象</returns>
         public IDbDataParameter CreatePara(string name, object value)
         {
-            return new NpgsqlParameter(name, value);
+            return new SqlParameter(name, value);
         }
 
 
@@ -114,10 +114,10 @@ namespace DBUtil
         {
             try
             {
-                NpgsqlCommand cmd = new NpgsqlCommand(strSql, (NpgsqlConnection)conn);
+                SqlCommand cmd = new SqlCommand(strSql, (SqlConnection)conn);
                 if (IsTran)
                 {
-                    cmd.Transaction = (NpgsqlTransaction)tran;
+                    cmd.Transaction = (SqlTransaction)tran;
                 }
                 if (!IsOpen)
                 {
@@ -154,11 +154,11 @@ namespace DBUtil
         {
             try
             {
-                NpgsqlCommand cmd = new NpgsqlCommand();
-                cmd.Connection = (NpgsqlConnection)conn;
+                SqlCommand cmd = new SqlCommand();
+                cmd.Connection = (SqlConnection)conn;
                 if (IsTran)
                 {
-                    cmd.Transaction = (NpgsqlTransaction)tran;
+                    cmd.Transaction = (SqlTransaction)tran;
                 }
                 if (!IsOpen)
                 {
@@ -199,10 +199,10 @@ namespace DBUtil
         {
             try
             {
-                NpgsqlCommand cmd = new NpgsqlCommand(strSql, (NpgsqlConnection)conn);
+                SqlCommand cmd = new SqlCommand(strSql, (SqlConnection)conn);
                 if (IsTran)
                 {
-                    cmd.Transaction = (NpgsqlTransaction)tran;
+                    cmd.Transaction = (SqlTransaction)tran;
                 }
                 cmd.Parameters.AddRange(paramArr);
                 if (!IsOpen)
@@ -259,8 +259,8 @@ namespace DBUtil
             foreach (System.Collections.DictionaryEntry item in ht)
             {
                 insertTableOption += " " + item.Key.ToString() + ",";
-                insertTableValues += ":" + item.Key.ToString() + ",";
-                paras.Add(new NpgsqlParameter()
+                insertTableValues += "@" + item.Key.ToString() + ",";
+                paras.Add(new SqlParameter()
                 {
                     ParameterName = item.Key.ToString(),
                     Value = item.Value
@@ -292,8 +292,8 @@ namespace DBUtil
                 }
                 else
                 {
-                    sql += " " + item.Key.ToString() + "=:" + item.Key.ToString() + ",";
-                    paras.Add(new NpgsqlParameter()
+                    sql += " " + item.Key.ToString() + "=@" + item.Key.ToString() + ",";
+                    paras.Add(new SqlParameter()
                     {
                         ParameterName = item.Key.ToString(),
                         Value = item.Value
@@ -326,8 +326,8 @@ namespace DBUtil
                 }
                 else
                 {
-                    sql += " " + item.Key.ToString() + "=:" + item.Key.ToString() + ",";
-                    paras.Add(new NpgsqlParameter()
+                    sql += " " + item.Key.ToString() + "=@" + item.Key.ToString() + ",";
+                    paras.Add(new SqlParameter()
                     {
                         ParameterName = item.Key.ToString(),
                         Value = item.Value
@@ -370,8 +370,8 @@ namespace DBUtil
                 }
                 else
                 {
-                    sql += " " + item.Key.ToString() + "=:" + item.Key.ToString() + ",";
-                    IDbDataParameter para = new NpgsqlParameter()
+                    sql += " " + item.Key.ToString() + "=@" + item.Key.ToString() + ",";
+                    IDbDataParameter para = new SqlParameter()
                     {
                         ParameterName = item.Key.ToString(),
                         Value = item.Value
@@ -386,8 +386,8 @@ namespace DBUtil
             sql += " where 1=1 ";
             foreach (var item in keys)
             {
-                sql += " and " + item + "=:" + item;
-                paras.Add(new NpgsqlParameter()
+                sql += " and " + item + "=@" + item;
+                paras.Add(new SqlParameter()
                 {
                     ParameterName = item,
                     Value = ht[item]
@@ -509,10 +509,10 @@ namespace DBUtil
         public object GetFirstColumn(string strSql)
         {
 
-            NpgsqlCommand cmd = new NpgsqlCommand(strSql, (NpgsqlConnection)conn);
+            SqlCommand cmd = new SqlCommand(strSql, (SqlConnection)conn);
             if (IsTran)
             {
-                cmd.Transaction = (NpgsqlTransaction)tran;
+                cmd.Transaction = (SqlTransaction)tran;
             }
             if (!IsOpen)
             {
@@ -536,11 +536,11 @@ namespace DBUtil
         /// <returns>返回查到的第一行第一列的值</returns>
         public object GetFirstColumn(string strSql, IDbDataParameter[] paraArr)
         {
-            NpgsqlCommand cmd = new NpgsqlCommand(strSql, (NpgsqlConnection)conn);
+            SqlCommand cmd = new SqlCommand(strSql, (SqlConnection)conn);
             cmd.Parameters.AddRange(paraArr);
             if (IsTran)
             {
-                cmd.Transaction = (NpgsqlTransaction)tran;
+                cmd.Transaction = (SqlTransaction)tran;
             }
             if (!IsOpen)
             {
@@ -618,10 +618,10 @@ namespace DBUtil
         /// <returns>返回阅读器</returns>
         public IDataReader GetDataReader(string strSql)
         {
-            NpgsqlCommand cmd = new NpgsqlCommand(strSql, (NpgsqlConnection)conn);
+            SqlCommand cmd = new SqlCommand(strSql, (SqlConnection)conn);
             if (IsTran)
             {
-                cmd.Transaction = (NpgsqlTransaction)tran;
+                cmd.Transaction = (SqlTransaction)tran;
             }
             if (!IsOpen)
             {
@@ -638,11 +638,11 @@ namespace DBUtil
         /// <returns>返回阅读器</returns>
         public IDataReader GetDataReader(string strSql, IDbDataParameter[] paraArr)
         {
-            NpgsqlCommand cmd = new NpgsqlCommand(strSql, (NpgsqlConnection)conn);
+            SqlCommand cmd = new SqlCommand(strSql, (SqlConnection)conn);
             cmd.Parameters.AddRange(paraArr);
             if (IsTran)
             {
-                cmd.Transaction = (NpgsqlTransaction)tran;
+                cmd.Transaction = (SqlTransaction)tran;
             }
             if (!IsOpen)
             {
@@ -660,17 +660,17 @@ namespace DBUtil
         /// <returns>返回的查询结果集</returns>
         public DataSet GetDataSet(string strSql)
         {
-            NpgsqlCommand cmd = new NpgsqlCommand(strSql, (NpgsqlConnection)conn);
+            SqlCommand cmd = new SqlCommand(strSql, (SqlConnection)conn);
             if (IsTran)
             {
-                cmd.Transaction = (NpgsqlTransaction)tran;
+                cmd.Transaction = (SqlTransaction)tran;
             }
             if (!IsOpen)
             {
                 conn.Open();
                 IsOpen = true;
             }
-            NpgsqlDataAdapter adp = new NpgsqlDataAdapter(cmd);
+            SqlDataAdapter adp = new SqlDataAdapter(cmd);
             DataSet set = new DataSet();
             adp.Fill(set);
             if (!IsTran && !IsKeepConnect)
@@ -690,18 +690,18 @@ namespace DBUtil
         /// <returns>返回的查询结果集</returns>
         public DataSet GetDataSet(string strSql, IDbDataParameter[] paraArr)
         {
-            NpgsqlCommand cmd = new NpgsqlCommand(strSql, (NpgsqlConnection)conn);
+            SqlCommand cmd = new SqlCommand(strSql, (SqlConnection)conn);
             cmd.Parameters.AddRange(paraArr);
             if (IsTran)
             {
-                cmd.Transaction = (NpgsqlTransaction)tran;
+                cmd.Transaction = (SqlTransaction)tran;
             }
             if (!IsOpen)
             {
                 conn.Open();
                 IsOpen = true;
             }
-            NpgsqlDataAdapter adp = new NpgsqlDataAdapter(cmd);
+            SqlDataAdapter adp = new SqlDataAdapter(cmd);
             DataSet set = new DataSet();
             adp.Fill(set);
             if (!IsTran && !IsKeepConnect)
@@ -838,7 +838,23 @@ namespace DBUtil
         /// <returns>返回经过分页的语句</returns>
         public string GetSqlForPageSize(string tableName, string[] selectColumns, int PageSize, int PageIndex, string strWhere, string strOrder)
         {
-            throw new NotFiniteNumberException("不建议使用这种方法分页!");
+            string sql = "";
+            string sqlSelect = "select ";
+            if (selectColumns == null)
+            {
+                sqlSelect += "* ";
+            }
+            else
+            {
+                foreach (string columnName in selectColumns)
+                {
+                    sqlSelect += columnName + ",";
+                }
+            }
+            sqlSelect = sqlSelect.Trim(new char[] { ',' });
+            sql = string.Format("{0} from (select *,ROW_NUMBER() OVER({1}) AS rownumber  from {2} t where 1=1 {3}) as tfix WHERE tfix.rownumber BETWEEN ({4}*{5}+1) AND ({6}*{7})", sqlSelect, strOrder, tableName, strWhere, PageIndex - 1, PageSize, PageIndex, PageSize);
+
+            return sql;
         }
 
 
@@ -852,7 +868,7 @@ namespace DBUtil
         /// <returns>经过分页的sql语句</returns>
         public string GetSqlForPageSize(string selectSql, string strOrder, int PageSize, int PageIndex)
         {
-            string sql = string.Format("{0} {1} limit {2} offset{3}", selectSql, strOrder, PageSize, (PageIndex - 1) * PageSize);
+            string sql = string.Format("select * from (select *,ROW_NUMBER() OVER({0}) as RNO__ from ({1}) as inner__ ) outer__ WHERE outer__.RNO__ BETWEEN ({2}*{3}+1) AND ({4}*{5})", strOrder, selectSql, PageIndex - 1, PageSize, PageIndex, PageSize);
             return sql;
         }
 
@@ -880,7 +896,7 @@ namespace DBUtil
         /// <returns></returns>
         public List<TableStruct> ShowTables()
         {
-            DataSet ds = GetDataSet("select TABLE_NAME from INFORMATION_SCHEMA.TABLES t where t.TABLE_TYPE ='BASE TABLE' and table_schema='public'");
+            DataSet ds = GetDataSet("select TABLE_NAME from INFORMATION_SCHEMA.TABLES t where t.TABLE_TYPE ='BASE TABLE'");
             TableStruct tbl = null;
             List<TableStruct> list = new List<TableStruct>();
             for (int i = 0; i < ds.Tables[0].Rows.Count; i++)
@@ -905,144 +921,294 @@ namespace DBUtil
         public TableStruct GetTableStruct(string tableName)
         {
             string wrapTableName = "";
-            if (!string.IsNullOrWhiteSpace(tableName) || !tableName.StartsWith("\""))
+            if (!string.IsNullOrWhiteSpace(tableName) || !tableName.StartsWith("["))
             {
-                wrapTableName = "\"" + tableName + "\"";
+                wrapTableName = "[" + tableName + "]";
             }
             string sql = string.Format(@"
-select 序号,列名,类型,长度,变长长度,是否可空,d.description 说明,def.adsrc 默认值,tt.存在默认值
-  from (SELECT c.oid        oid,
-               a.attnum     attnum,
-                ROW_NUMBER() OVER(order BY a.attnum) 序号,
-               a.attname    列名,
-               a.atthasdef  存在默认值,
-               t.typname    类型,
-               a.attlen     长度,
-               a.atttypmod 变长长度,
-               a.attnotnull 是否可空
-          from pg_class c, pg_attribute a, pg_type t
-         where c.relname = '{0}'
-           and a.attnum > 0
-           and a.attrelid = c.oid
-	   and a.attisdropped='f'
-           and a.atttypid = t.oid) tt
-  left join pg_description d on d.objoid = tt.oid
-                            and d.objsubid = tt.attnum 
-  left join pg_attrdef def on def.adrelid=tt.oid and tt.attnum=def.adnum
+select 
+	序号=ROW_NUMBER() OVER(order BY ORDINAL_POSITION),
+	列名=t.COLUMN_NAME,
+	类型=DATA_TYPE,
+    最大长度=tt.max_length,
+	说明=tt.说明,
+	是否可空=IS_NULLABLE,
+    自增种子=IDENT_SEED('{0}'),
+    增量=IDENT_INCR('{0}'),
+	默认值=COLUMN_DEFAULT,
+	是否自增 
+from INFORMATION_SCHEMA.COLUMNS T
+left outer join
+(select 列名=c.name,说明=p.value ,max_length
+from sys.columns c 
+	left outer join sys.objects o on c.object_id =o.object_id
+	left outer join sys.extended_properties p on c.column_id = p.minor_id and c.object_id=p.major_id
+where o.name='{0}')  tt
+on t.COLUMN_NAME=tt.列名 
+left outer join
+(SELECT TABLE_NAME,COLUMN_NAME,是否自增=case (COLUMNPROPERTY(      
+      OBJECT_ID('{0}'),COLUMN_NAME,'IsIdentity')) when 1 then '是' else '否' end  FROM INFORMATION_SCHEMA.columns) c
+on c.COLUMN_NAME =T.COLUMN_NAME
+
+where t.TABLE_NAME='{0}'
+and c.TABLE_NAME='{0}' 
 ", tableName);
             DataTable dt = GetDataTable(sql);
             if (dt.Rows.Count == 0)
             {
                 return null;
             }
-            PostgreSqlTableStruct tbl = new PostgreSqlTableStruct();
+            TableStruct tbl = new TableStruct();
             tbl.Name = tableName;
             for (int i = 0; i < dt.Rows.Count; i++)
             {
-                PostgreSqlTableStruct.Column col = new PostgreSqlTableStruct.Column()
+                TableStruct.Column col = new TableStruct.Column()
                 {
                     Name = dt.Rows[i]["列名"].ToString(),
                     Desc = dt.Rows[i]["说明"].ToString(),
-                    IsNullable = dt.Rows[i]["是否可空"].ToString().ToUpper() == "FALSE" ? true : false,
+                    IsIdentity = dt.Rows[i]["是否自增"].ToString() == "是" ? true : false,
+                    IsNullable = dt.Rows[i]["是否可空"].ToString() == "YES" ? true : false,
                     Type = dt.Rows[i]["类型"].ToString(),
-                    MaxLength = int.Parse(dt.Rows[i]["变长长度"].ToString()),
-                    HasDefault = dt.Rows[i]["存在默认值"].ToString().ToUpper() == "TRUE" ? true : false,
-                    Default = (dt.Rows[i]["默认值"] ?? "").ToString()
+                    Default = dt.Rows[i]["默认值"].ToString(),
+                    MaxLength = int.Parse(dt.Rows[i]["最大长度"].ToString())
                 };
+                if (col.IsIdentity)
+                {
+                    try
+                    {
+                        col.Start = int.Parse(dt.Rows[0]["自增种子"].ToString());
+                        col.Incre = int.Parse(dt.Rows[0]["增量"].ToString());
+                    }
+                    catch (Exception)
+                    {
+                        col.IsIdentity = false;
+                    }
+                }
+                col.Default = (col.Default ?? "").Trim(new char[] { '(', ')', ' ', '\'' });
                 tbl.Columns.Add(col);
-            }
-            //找主键字段
-            string primarySql = string.Format(@"
-select pg_attribute.attname  as colname
-  from pg_constraint
- inner join pg_class on pg_constraint.conrelid = pg_class.oid
- inner join pg_attribute on pg_attribute.attrelid = pg_class.oid
-                        and array[pg_attribute.attnum] <@ pg_constraint.conkey
- inner join pg_type on pg_type.oid = pg_attribute.atttypid
- where pg_class.relname = '{0}'
-   and pg_constraint.contype = 'p'
-", tableName);
-            dt = GetDataTable(primarySql);
-            if (dt.Rows.Count > 0)
-            {
-                for (int i = 0; i < dt.Rows.Count; i++)
+                string sqltmp = string.Format(@"SELECT
+  count(1)
+FROM
+  sys.indexes idx
+    JOIN sys.index_columns idxCol 
+      ON (idx.object_id = idxCol.object_id 
+          AND idx.index_id = idxCol.index_id 
+          AND idx.is_unique_constraint = 1)
+    JOIN sys.tables tab
+      ON (idx.object_id = tab.object_id)
+    JOIN sys.columns col
+      ON (idx.object_id = col.object_id
+          AND idxCol.column_id = col.column_id)
+WHERE
+  tab.name = '{0}'
+  and
+  col.name='{1}'", tableName, col.Name);
+                if (GetFirstColumnString(sqltmp) == "1")
                 {
-                    if (i == 0)
-                    {
-                        tbl.PrimaryKey = dt.Rows[0][0].ToString();
-                    }
-                    else
-                    {
-                        tbl.PrimaryKey += "," + dt.Rows[i][0].ToString();
-                    }
-                }
-                if (dt.Rows.Count > 1)
-                {
-                    for (int i = 0; i < dt.Rows.Count; i++)
-                    {
-                        var col = tbl.Columns.Find(j => j.Name == dt.Rows[i][0].ToString());
-                        col.IsUnique = true;
-                        col.IsUniqueUion = true;
-                        col.UniqueCols = tbl.PrimaryKey; ;
-                    }
-                }
-                else if (dt.Rows.Count == 1)
-                {
-                    var col = tbl.Columns.Find(j => j.Name == dt.Rows[0][0].ToString());
                     col.IsUnique = true;
-                    col.IsUniqueUion = false;
+                }
+                else
+                {
+                    col.IsUnique = false;
                 }
             }
-            //找唯一索引，注意,可能是两个列联合唯一
-            string uqiSql = string.Format(@"
-select t.attname 列名,cc.relname  索引名 ,t.relname 表名 from (select a.attname, x.indexrelid,c.relname
-  from pg_index x, pg_class c, pg_attribute a
- where c.oid = x.indrelid
-   and a.attrelid = x.indexrelid
-   and indisunique = true
-   and indisprimary=false
-   and c.relname = '{0}') t left join pg_class cc on t.indexrelid=cc.oid
-  order by 索引名", tableName);
-            dt = GetDataTable(uqiSql);
+            sql = string.Format(@"
+select b.column_name
+from information_schema.table_constraints a
+inner join information_schema.constraint_column_usage b
+on a.constraint_name = b.constraint_name
+where a.constraint_type = 'PRIMARY KEY' and a.table_name = '{0}'
+", tableName);
+            dt = GetDataTable(sql);
             if (dt.Rows.Count > 0)
             {
-                Hashtable ht = new Hashtable();
-                //首先找出来哪些索引名称是联合索引
                 for (int i = 0; i < dt.Rows.Count; i++)
                 {
-                    if (ht[dt.Rows[i]["索引名"]] == null)
+                    string colname = dt.Rows[i][0].ToString();
+                    tbl.PrimaryKey += "," + colname;
+                    TableStruct.Column col = tbl.Columns.First<TableStruct.Column>(j => j.Name == colname);
+                    col.IsPrimaryKey = true;
+                    if (dt.Rows.Count == 1)
                     {
-                        ht.Add(dt.Rows[i]["索引名"].ToString(), new List<string>() { dt.Rows[i]["列名"].ToString() });
+                        col.IsUnique = true;
                     }
-                    else
-                    {
-                        //如果不为空,说明出现了联合索引
-                        ((List<string>)ht[dt.Rows[i]["索引名"].ToString()]).Add(dt.Rows[i]["列名"].ToString());
-                    }
-                }
-                for (int i = 0; i < tbl.Columns.Count; i++)
-                {
-                    var keys = ht.Keys;
-                    foreach (var item in keys)
-                    {
-                        if (((List<string>)ht[item.ToString()]).Contains(tbl.Columns[i].Name))
-                        {
-                            //如果这个列在某一个索引名称的索引列中
-                            tbl.Columns[i].IsUnique = true;
-                            string cols = "";
-                            ((List<string>)ht[item.ToString()]).ForEach(ii =>
-                            {
-                                cols += "," + ii;
-                            });
-                            tbl.Columns[i].UniqueCols = cols.Trim(',');
-                            if (tbl.Columns[i].UniqueCols.Contains(","))
-                            {
-                                tbl.Columns[i].IsUniqueUion = true;
-                            }
-                        }
-                    }
-                }
 
+                }
+            }
+            tbl.PrimaryKey = (tbl.PrimaryKey ?? "").Trim(',');
+            sql = @"select 
+	说明=(SELECT value   
+FROM sys.extended_properties ds  
+LEFT JOIN sysobjects tbs ON ds.major_id=tbs.id  
+WHERE  ds.minor_id=0 and  
+ tbs.name=table_name )
+from INFORMATION_SCHEMA.TABLES t where t.TABLE_TYPE='BASE TABLE' and t.TABLE_NAME='" + tbl.Name + "'";
+            tbl.Desc = GetFirstColumnString(sql);
+            //构建表索引集合
+            sql = "sp_helpindex '" + wrapTableName + "'";
+            dt = GetDataTable(sql);
+            if (dt != null && dt.Rows.Count > 0)
+            {
+                for (int i = dt.Rows.Count - 1; i >= 0; i--)
+                {
+                    if (dt.Rows[i][1].ToString().Contains("primary key located on PRIMARY") || dt.Rows[i][1].ToString().Contains("unique key located on PRIMARY"))
+                    {
+                        continue;
+                    }
+                    TableStruct.Index index = new TableStruct.Index();
+                    index.Name = dt.Rows[i][0].ToString();
+                    index.Desc = dt.Rows[i][1].ToString();
+                    index.Keys = dt.Rows[i][2].ToString();
+                    tbl.Indexs.Add(index);
+                }
+            }
+
+            //构建触发器集合
+            sql = @" sp_helptrigger " + wrapTableName;
+            dt = GetDataTable(sql);
+            if (dt != null && dt.Rows.Count > 0)
+            {
+                for (int i = 0; i < dt.Rows.Count; i++)
+                {
+                    TableStruct.Trigger tri = new TableStruct.Trigger();
+                    tri.Name = dt.Rows[i]["trigger_name"].ToString();
+                    string desc = "";
+                    if (dt.Rows[i]["isupdate"].ToString() == "1")
+                    {
+                        desc += "update/";
+                    }
+                    if (dt.Rows[i]["isdelete"].ToString() == "1")
+                    {
+                        desc += "delete/";
+                    }
+                    if (dt.Rows[i]["isinsert"].ToString() == "1")
+                    {
+                        desc += "insert/";
+                    }
+                    if (dt.Rows[i]["isafter"].ToString() == "1")
+                    {
+                        desc += "after";
+                    }
+                    tri.Type = desc;
+                    tbl.Triggers.Add(tri);
+                }
+            }
+            //构建约束集合
+            sql = "sp_helpconstraint @objname='" + tableName + "'";
+            DataSet ds = GetDataSet(sql);
+            if (ds.Tables.Count > 1 && ds.Tables[1].Rows.Count > 0)
+            {
+
+                for (int i = 0; i < ds.Tables[1].Rows.Count; i++)
+                {
+                    TableStruct.Constraint constraint = new TableStruct.Constraint();
+
+                    string type = (ds.Tables[1].Rows[i]["constraint_type"] ?? "").ToString();
+                    if (string.IsNullOrWhiteSpace(type))
+                    {
+                        continue;
+                    }
+                    if (type.StartsWith("CHECK"))
+                    {
+                        constraint.Name = (ds.Tables[1].Rows[i]["constraint_name"] ?? "").ToString();
+                        constraint.Type = "检查约束";
+                        string[] arr = (ds.Tables[1].Rows[i]["constraint_type"] ?? "").ToString().Split(new String[] { " " }, StringSplitOptions.RemoveEmptyEntries);
+
+                        constraint.Keys = arr[arr.Length - 1];
+                        constraint.Remark = (ds.Tables[1].Rows[i]["constraint_keys"] ?? "").ToString();
+                        tbl.Constraints.Add(constraint);
+                        continue;
+                    }
+                    else if (type.StartsWith("DEFAULT"))
+                    {
+                        constraint.Name = (ds.Tables[1].Rows[i]["constraint_name"] ?? "").ToString();
+                        constraint.Type = "默认约束";
+                        string[] arr = (ds.Tables[1].Rows[i]["constraint_type"] ?? "").ToString().Split(new String[] { " " }, StringSplitOptions.RemoveEmptyEntries);
+
+                        constraint.Keys = arr[arr.Length - 1];
+                        constraint.Remark = (ds.Tables[1].Rows[i]["constraint_keys"] ?? "").ToString();
+                        tbl.Constraints.Add(constraint);
+                        continue;
+                    }
+                    else if (type.StartsWith("FOREIGN"))
+                    {
+                        constraint.Name = (ds.Tables[1].Rows[i]["constraint_name"] ?? "").ToString();
+                        constraint.Type = "外键约束";
+                        if (ds.Tables[1].Rows.Count > i)
+                        {
+                            constraint.Name = (ds.Tables[1].Rows[i]["constraint_name"] ?? "").ToString();
+                            constraint.Keys = (ds.Tables[1].Rows[i]["constraint_keys"] ?? "").ToString();
+                            constraint.DelType = (ds.Tables[1].Rows[i]["delete_action"] ?? "").ToString();
+                            constraint.UpdateType = (ds.Tables[1].Rows[i]["update_action"] ?? "").ToString();
+
+                            DataTable dt2 = GetDataTable("select delete_referential_action,update_referential_action from sys.foreign_keys where name='" + constraint.Name + "'");
+                            switch (dt2.Rows[0]["delete_referential_action"].ToString())
+                            {
+                                case "0":
+                                    {
+                                        constraint.DelType = "NO ACTION";
+                                        break;
+                                    }
+                                case "1":
+                                    {
+                                        constraint.DelType = "CASCADE";
+                                        break;
+                                    }
+                                case "2":
+                                    {
+                                        constraint.DelType = "SET NULL";
+                                        break;
+                                    }
+                                case "3":
+                                    {
+                                        constraint.DelType = "SET DEFAULT";
+                                        break;
+                                    }
+                            }
+                            switch (dt2.Rows[0]["update_referential_action"].ToString())
+                            {
+                                case "0":
+                                    {
+                                        constraint.UpdateType = "NO ACTION";
+                                        break;
+                                    }
+                                case "1":
+                                    {
+                                        constraint.UpdateType = "CASCADE";
+                                        break;
+                                    }
+                                case "2":
+                                    {
+                                        constraint.UpdateType = "SET NULL";
+                                        break;
+                                    }
+                                case "3":
+                                    {
+                                        constraint.UpdateType = "SET DEFAULT";
+                                        break;
+                                    }
+                            }
+                            constraint.RefStr = (ds.Tables[1].Rows[i + 1]["constraint_keys"] ?? "").ToString();
+                        }
+                        constraint.Remark = "Update(" + constraint.UpdateType + ")," + "Delete(" + constraint.DelType + "),Ref(" + constraint.RefStr + ")";
+                        tbl.Constraints.Add(constraint);
+                        continue;
+                    }
+                    else if (type.StartsWith("PRIMARY"))
+                    {
+                        constraint.Name = (ds.Tables[1].Rows[i]["constraint_name"] ?? "").ToString();
+                        constraint.Type = "主键约束";
+                        constraint.Keys = (ds.Tables[1].Rows[i]["constraint_keys"] ?? "").ToString();
+                        tbl.Constraints.Add(constraint);
+                    }
+                    else if (type.StartsWith("UNIQUE"))
+                    {
+                        constraint.Name = (ds.Tables[1].Rows[i]["constraint_name"] ?? "").ToString();
+                        constraint.Type = "唯一约束";
+                        constraint.Keys = (ds.Tables[1].Rows[i]["constraint_keys"] ?? "").ToString();
+                        tbl.Constraints.Add(constraint);
+                    }
+                }
             }
             return tbl;
         }
@@ -1087,7 +1253,9 @@ select t.attname 列名,cc.relname  索引名 ,t.relname 表名 from (select a.a
         public List<Proc> GetProcs()
         {
             List<Proc> res = new List<Proc>();
-            string sql = @"select p.proname 名称,prosrc 创建语句 from pg_proc p where p.pronamespace in(select oid from pg_namespace where pg_namespace.nspname='public') order by proname";
+            string sql = @"select 名称=ROUTINE_NAME,最近更新=LAST_ALTERED
+from INFORMATION_SCHEMA.ROUTINES
+where ROUTINE_TYPE='PROCEDURE'";
             DataTable dt = GetDataTable(sql);
             if (dt.Rows.Count > 0)
             {
@@ -1095,9 +1263,18 @@ select t.attname 列名,cc.relname  索引名 ,t.relname 表名 from (select a.a
                 {
                     Proc proc = new Proc();
                     proc.Name = dt.Rows[i]["名称"].ToString();
-                    proc.LastUpdate = "";
-                    string createsql = dt.Rows[i]["创建语句"].ToString();
-                    //proc.CreateSql = sb.ToString();
+                    proc.LastUpdate = dt.Rows[i]["最近更新"].ToString();
+                    sql = @"sp_helptext '" + proc.Name + "'";
+                    StringBuilder sb = new StringBuilder("");
+                    DataTable dt2 = GetDataTable(sql);
+                    if (dt.Rows.Count > 0)
+                    {
+                        for (int ii = 0; ii < dt.Rows.Count; ii++)
+                        {
+                            sb.AppendLine(dt.Rows[ii][0].ToString());
+                        }
+                        proc.CreateSql = sb.ToString();
+                    }
                     res.Add(proc);
                 }
             }
@@ -1125,10 +1302,7 @@ select t.attname 列名,cc.relname  索引名 ,t.relname 表名 from (select a.a
         /// <param name="newTableName">新表名</param>
         public void RenameTable(string oldTableName, string newTableName)
         {
-            oldTableName = oldTableName ?? "";
-            oldTableName = WrapName(oldTableName);
-            newTableName = WrapName(newTableName);
-            string sql = string.Format("alter table {0} rename to {1}", oldTableName, newTableName);
+            string sql = "EXEC   sp_rename   '" + oldTableName + "',   '" + newTableName + "'";
             ExecuteSql(sql);
         }
 
@@ -1140,13 +1314,7 @@ select t.attname 列名,cc.relname  索引名 ,t.relname 表名 from (select a.a
         /// <returns></returns>
         public void DropTable(string tableName)
         {
-            tableName = tableName ?? "";
-            string wrapTableName = "";
-            if (!string.IsNullOrWhiteSpace(tableName) || !tableName.StartsWith("\""))
-            {
-                wrapTableName = "\"" + tableName + "\"";
-            }
-            string sql = "drop  table   " + wrapTableName + "";
+            string sql = "drop  table   " + tableName + "";
             ExecuteSql(sql);
         }
 
@@ -1159,11 +1327,14 @@ select t.attname 列名,cc.relname  索引名 ,t.relname 表名 from (select a.a
         /// <returns></returns>
         public void SaveTableDesc(string tableName, string desc)
         {
-            tableName = tableName ?? "";
-            tableName = WrapName(tableName);
-            desc = (desc ?? "").Replace("\"", "\"\"");
-            string sql = string.Format(@"COMMENT ON TABLE {0}
-  IS '{1}'", tableName, desc);
+            string sql = string.Format(@"SELECT count(1)
+FROM fn_listextendedproperty ('MS_Description', 'schema', 'dbo', 'table', '{0}',null,null);", tableName);
+            if (GetFirstColumnString(sql) == "1")
+            {
+                sql = string.Format(@"EXEC sp_dropextendedproperty @name=N'MS_Description', @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'TABLE',@level1name=N'{0}', @level2type=null,@level2name=null", tableName);
+                ExecuteSql(sql);
+            }
+            sql = string.Format(@"EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'{0}' , @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'TABLE',@level1name=N'{1}', @level2type=null,@level2name=null", desc, tableName);
             ExecuteSql(sql);
         }
 
@@ -1176,7 +1347,7 @@ select t.attname 列名,cc.relname  索引名 ,t.relname 表名 from (select a.a
         /// <returns></returns>
         public void RenameColumn(string tableName, string oldColumnName, string newColumnName)
         {
-            string sql = string.Format("alter table {0} rename {1} to {2}", WrapName(tableName), WrapName(oldColumnName), WrapName(newColumnName));
+            string sql = string.Format("sp_rename '{0}.{1}','{2}','column' ", tableName, oldColumnName, newColumnName);
             ExecuteSql(sql);
         }
 
@@ -1188,7 +1359,7 @@ select t.attname 列名,cc.relname  索引名 ,t.relname 表名 from (select a.a
         /// <returns></returns>
         public void DropColumn(string tableName, string columnName)
         {
-            string sql = string.Format(" ALTER TABLE {0} DROP COLUMN {1}", WrapName(tableName), WrapName(columnName));
+            string sql = string.Format(" ALTER TABLE {0} DROP COLUMN {1}", tableName, columnName);
             ExecuteSql(sql);
 
         }
@@ -1202,7 +1373,15 @@ select t.attname 列名,cc.relname  索引名 ,t.relname 表名 from (select a.a
         /// <returns></returns>
         public void SaveColumnDesc(string tableName, string columnName, string desc)
         {
-            string sql = string.Format("COMMENT ON COLUMN public.\"{0}\".\"{1}\" IS '{2}';", tableName, columnName, desc);
+            string sql = string.Format(@"SELECT count(1)
+FROM fn_listextendedproperty ('MS_Description', 'schema', 'dbo', 'table', '{0}','column','{1}');", tableName, columnName);
+            if (GetFirstColumnString(sql) == "1")
+            {
+                sql = string.Format(@"--删除列说明
+  EXEC sp_dropextendedproperty @name=N'MS_Description', @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'TABLE',@level1name=N'{0}', @level2type='column',@level2name='{1}'", tableName, columnName);
+                ExecuteSql(sql);
+            }
+            sql = string.Format(@"EXECUTE sp_addextendedproperty N'MS_Description', '{0}', N'schema', N'dbo', N'table', N'{1}', N'column', N'{2}'", desc, tableName, columnName);
             ExecuteSql(sql);
         }
 
@@ -1215,7 +1394,7 @@ select t.attname 列名,cc.relname  索引名 ,t.relname 表名 from (select a.a
         /// <returns></returns>
         public Result AlterColumnType(string tableName, string columnName, string columnType, bool isForce)
         {
-            string sql = string.Format("alter table {0} alter column {1} type {2} using {1}::{2}", WrapName(tableName), WrapName(columnName), columnType);
+            string sql = string.Format("alter table {0} alter column {1} {2}", tableName, columnName, columnType);
             try
             {
                 ExecuteSql(sql);
@@ -1225,9 +1404,9 @@ select t.attname 列名,cc.relname  索引名 ,t.relname 表名 from (select a.a
             {
                 if (isForce)
                 {
-                    sql = string.Format("ALTER TABLE {0} DROP COLUMN {1}", WrapName(tableName), WrapName(columnName));
+                    sql = string.Format("ALTER TABLE {0} DROP COLUMN {1}", tableName, columnName);
                     ExecuteSql(sql);
-                    sql = string.Format("ALTER TABLE {0} ADD {1} {2}", WrapName(tableName), WrapName(columnName), columnType);
+                    sql = string.Format("ALTER TABLE {0} ADD {1} {2}", tableName, columnName, columnType);
                     ExecuteSql(sql);
                     return new Result() { Success = true };
                 }
@@ -1406,23 +1585,38 @@ EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'{0}' , @level0
         /// <returns></returns>
         public void AddColumn(string tableName, TableStruct.Column column)
         {
-            string sql = string.Format(" alter table {0} add {1} {2} ", WrapName(tableName), WrapName(column.Name), column.Type);
-            if (!column.IsNullable)
+            string sql = " alter table " + tableName + " add " + column.Name + " " + column.Type;
+            string sqlDesc = "";
+            if (!string.IsNullOrWhiteSpace(column.Desc))
+            {
+                sqlDesc = string.Format("EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'{0}' , @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'TABLE',@level1name=N'{1}', @level2type=N'COLUMN',@level2name=N'{2}'", column.Desc, tableName, column.Name);
+            }
+            if (column.IsNullable)
+            {
+                sql += " null";
+            }
+            else
             {
                 sql += " not null";
+            }
+            if (column.IsIdentity)
+            {
+                sql += " identity(" + column.Start + "," + column.Incre + ")";
             }
             if (column.IsUnique)
             {
                 sql += " unique";
             }
-            if (!string.IsNullOrWhiteSpace(column.Default))
+            if (!string.IsNullOrEmpty(column.Default))
             {
-                sql += " default '" + column.Default.Replace("\"", "\"\"") + "'";
-            }
-            string sqlDesc = "";
-            if (!string.IsNullOrWhiteSpace(column.Desc))
-            {
-                sqlDesc = string.Format("COMMENT ON COLUMN public.{0}.{1} IS '{2}';", WrapName(tableName), column.Name, column.Desc);
+                if (column.Type.Contains("char") || column.Type.Contains("date") || column.Type.Contains("text"))
+                {
+                    sql += " default '" + column.Default + "'";
+                }
+                else
+                {
+                    sql += " default " + column.Default;
+                }
             }
             ExecuteSql(sql);
             if (sqlDesc != "")
@@ -1608,8 +1802,18 @@ EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'{0}' , @level0
         /// <returns></returns>
         public string CreateViewSql(string viewName)
         {
-            string sql = string.Format("select definition from pg_views where viewname='{0}'", viewName);
-            return GetFirstColumnString(sql);
+            if (!string.IsNullOrWhiteSpace(viewName) && viewName.StartsWith("["))
+            {
+                viewName = "[" + viewName + "]";
+            }
+            StringBuilder sb = new StringBuilder();
+
+            DataTable dt = GetDataTable("sp_helptext " + viewName);
+            for (int ii = 0; ii < dt.Rows.Count; ii++)
+            {
+                sb.Append(dt.Rows[ii][0].ToString());
+            }
+            return sb.ToString();
         }
 
         /// <summary>根据存储过程名字生成存储过程的创建语句
@@ -1618,7 +1822,9 @@ EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'{0}' , @level0
         /// <returns></returns>
         public string CreateProcSql(string procName)
         {
-            string sql = string.Format(@"select  prosrc  from pg_proc  where proname = '{0}';", procName);
+            string sql = @"select ROUTINE_DEFINITION
+from INFORMATION_SCHEMA.ROUTINES
+where ROUTINE_TYPE='PROCEDURE' and ROUTINE_NAME='" + procName + "'\r\n";
             return GetFirstColumnString(sql);
         }
 
@@ -1659,20 +1865,6 @@ EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'{0}' , @level0
             sb.AppendLine();
             Count = dt.Rows.Count;
             return sb.ToString();
-        }
-
-        /// <summary>包装对象名称,如果非全部小写,自动添加双引号
-        /// </summary>
-        /// <param name="tableName"></param>
-        /// <returns></returns>
-        public string WrapName(string tableName)
-        {
-            tableName = tableName ?? "";
-            if (tableName.ToLower() != tableName && !tableName.Contains('\"'))
-            {
-                tableName = "\"" + tableName + "\"";
-            }
-            return tableName;
         }
 
         #region string sqlExportDataProc 表数据导出insert语句的存储过程语句
@@ -1731,5 +1923,13 @@ end
 
 ";
         #endregion
+
+        /// <summary>根据当前的数据库类型和连接字符串创建一个新的数据库操作对象
+        /// </summary>
+        /// <returns></returns>
+        public IDbAccess CreateNewIDB()
+        {
+            return IDBFactory.CreateIDB(ConnectionString, DataBaseType);
+        }
     }
 }

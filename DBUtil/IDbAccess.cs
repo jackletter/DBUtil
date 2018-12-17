@@ -9,14 +9,22 @@ namespace DBUtil
 {
     public interface IDbAccess : IDisposable
     {
+        /// <summary>ID和编号生成管理器,只读</summary>
         IDSNOManager IDSNOManager { get; }
+
+        /// <summary>是否保持连接不断开</summary>
         bool IsKeepConnect { get; set; }
+
+        /// <summary>事物对象</summary>
         IDbTransaction tran { get; set; }
 
+        /// <summary>连接字符串</summary>
         string ConnectionString { get; set; }
 
+        /// <summary>连接对象</summary>
         IDbConnection conn { get; set; }
 
+        /// <summary>数据库类型</summary>
         DataBaseType DataBaseType { get; set; }
 
         /// <summary>记录是否打开了连接,防止多次打开连接</summary>
@@ -264,5 +272,10 @@ namespace DBUtil
         /// </summary>
         /// <returns>返回所有的视图</returns>
         List<DataView> ShowViews();
+
+        /// <summary>根据当前的数据库类型和连接字符串创建一个新的数据库操作对象
+        /// </summary>
+        /// <returns></returns>
+        IDbAccess CreateNewIDB();
     }
 }
