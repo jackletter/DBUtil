@@ -9,6 +9,6 @@ http://blog.csdn.net/u010476739/article/details/54882950
 3. 重新生成解决方案即可
 
 如果是操作sqlite注意观察是否输出了SQLite.Interop.dll,如果没有的话
-  1.直接手动拷贝DBUtil\packages\System.Data.SQLite.Core.1.0.109.2\build\net45\x64\SQLite.Interop.dll到debug目录即可
+  1. 直接手动拷贝DBUtil\packages\System.Data.SQLite.Core.1.0.109.2\build\net45\x64\SQLite.Interop.dll到debug目录即可
 或者
-  2.编辑生成管理器，先将Any CPU 改为x64再改为 Any CPU即可
+  2. 编辑生成管理器，先将Any CPU 改为x64再改为 Any CPU即可
