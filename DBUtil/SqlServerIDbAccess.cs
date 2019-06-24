@@ -1,4 +1,4 @@
-﻿using System.Data.SqlClient;
+using System.Data.SqlClient;
 using System;
 using System.Collections.Generic;
 using System.Collections;
@@ -211,6 +211,7 @@ namespace DBUtil
                     IsOpen = true;
                 }
                 int r = cmd.ExecuteNonQuery();
+                cmd.Parameters.Clear();
                 if (!IsTran && !IsKeepConnect)
                 {
                     conn.Close();
@@ -548,6 +549,7 @@ namespace DBUtil
                 IsOpen = true;
             }
             object obj = cmd.ExecuteScalar();
+            cmd.Parameters.Clear();
             if (!IsTran && !IsKeepConnect)
             {
                 conn.Close();
@@ -649,7 +651,9 @@ namespace DBUtil
                 conn.Open();
                 IsOpen = true;
             }
-            return cmd.ExecuteReader();
+            IDataReader reader = cmd.ExecuteReader();
+            cmd.Parameters.Clear();
+            return reader;
         }
 
 
@@ -704,6 +708,7 @@ namespace DBUtil
             SqlDataAdapter adp = new SqlDataAdapter(cmd);
             DataSet set = new DataSet();
             adp.Fill(set);
+            cmd.Parameters.Clear();
             if (!IsTran && !IsKeepConnect)
             {
                 conn.Close();
