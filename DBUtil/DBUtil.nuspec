@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<package >
+  <metadata>
+    <id>$id$</id>
+    <version>$version$</version>
+    <title>$title$</title>
+    <authors>$author$</authors>
+    <owners>$author$</owners>
+    <licenseUrl>https://choosealicense.com/licenses/mit/</licenseUrl>
+    <projectUrl>https://github.com/jackletter/DBUtil</projectUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>$description$</description>
+    <releaseNotes>修复sqlserver下参数不能重复使用的问题.</releaseNotes>
+    <copyright>Copyright 2019</copyright>
+    <tags>DBUtil .net</tags>
+  </metadata>
+</package>
