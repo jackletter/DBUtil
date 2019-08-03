@@ -127,11 +127,6 @@ namespace DBUtil
                     IsOpen = true;
                 }
                 int r = cmd.ExecuteNonQuery();
-                if (!IsTran && !IsKeepConnect)
-                {
-                    conn.Close();
-                    this.IsOpen = false;
-                }
                 return r;
             }
             catch (Exception e)
@@ -172,11 +167,6 @@ namespace DBUtil
                     cmd.CommandText = sql;
                     cmd.ExecuteNonQuery();
                 }
-                if (!IsTran && !IsKeepConnect)
-                {
-                    conn.Close();
-                    this.IsOpen = false;
-                }
             }
             catch (Exception e)
             {
@@ -213,11 +203,6 @@ namespace DBUtil
                     IsOpen = true;
                 }
                 int r = cmd.ExecuteNonQuery();
-                if (!IsTran && !IsKeepConnect)
-                {
-                    conn.Close();
-                    this.IsOpen = false;
-                }
                 return r;
             }
             catch (Exception e)
