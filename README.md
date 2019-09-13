@@ -5,7 +5,7 @@
 
 1. 安装依赖：
 ```shell
-Install-Package DBUtil -Version 1.0.1
+Install-Package DBUtil
 ```
 2. 创建数据库操作对象
 ```c#
