@@ -1,6 +1,7 @@
 # DBUtil
 .net 下常用的数据库访问工具,支持sqlserver、oracle、mysql、postgresql、sqlite、access
 运行平台：net framework4.5
+## 另外：.netcore版本： https://github.com/jackletter/DBUtil.Standard
 # 使用说明
 
 1. 安装依赖：
