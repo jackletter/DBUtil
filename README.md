@@ -1,3 +1,5 @@
+#最新版本请移步：https://gitee.com/jackletter/DBUtil
+
 # DBUtil
 .net 下常用的数据库访问工具,支持sqlserver、oracle、mysql、postgresql、sqlite、access
 运行平台：net framework4.5
